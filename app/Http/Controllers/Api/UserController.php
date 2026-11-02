@@ -9,9 +9,19 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::with('roles')->get();
+        // Filtros opcionales: ?role=cliente&search=ana (por nombre, correo o teléfono)
+        $users = User::with('roles')
+            ->when($request->role, fn ($q, $role) => $q->whereHas('roles', fn ($r) => $r->where('name', $role)))
+            ->when($request->search, function ($q, $search) {
+                $like = '%' . mb_strtolower($search) . '%';
+                $q->where(fn ($w) => $w->whereRaw('LOWER(name) LIKE ?', [$like])
+                    ->orWhereRaw('LOWER(email) LIKE ?', [$like])
+                    ->orWhere('phone', 'like', "%{$search}%"));
+            })
+            ->orderBy('name')
+            ->get();
         return response()->json($users);
     }
 
