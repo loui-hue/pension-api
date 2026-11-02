@@ -55,6 +55,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Retos
     Route::get('/challenges', [ChallengeController::class, 'index']);
     Route::get('/challenges/user', [ChallengeController::class, 'userChallenges']);
+    Route::post('/challenges', [ChallengeController::class, 'store']);
     Route::post('/challenges/join', [ChallengeController::class, 'join']);
     Route::patch('/challenges/{id}/progress', [ChallengeController::class, 'updateProgress']);
 });
