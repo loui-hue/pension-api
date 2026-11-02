@@ -38,8 +38,14 @@ class Order extends Model
         return $this->hasMany(OrderItem::class);
     }
 
+    // Puede haber varios intentos (p. ej. un QR rechazado y luego efectivo); payment() es el último.
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
+
     public function payment()
     {
-        return $this->hasOne(Payment::class);
+        return $this->hasOne(Payment::class)->latestOfMany();
     }
 }

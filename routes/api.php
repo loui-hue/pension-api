@@ -41,7 +41,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('orders/{id}/status', [OrderController::class, 'updateStatus']);
 
     // Pagos
+    Route::get('payment-methods', [PaymentController::class, 'methods']);
+    Route::post('payment-methods/{id}', [PaymentController::class, 'updateMethod']); // multipart (QR)
+    Route::get('payment-methods/{id}/qr', [PaymentController::class, 'qrImage']);
     Route::apiResource('payments', PaymentController::class);
+    Route::patch('payments/{id}/confirm', [PaymentController::class, 'confirm']);
+    Route::patch('payments/{id}/reject', [PaymentController::class, 'reject']);
 
     // Fidelización
     Route::get('/loyalty', [LoyaltyController::class, 'index']);
