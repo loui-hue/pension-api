@@ -22,6 +22,11 @@ services:
     environment:
       DB_HOST: db
       DB_PORT: 5432
+      # Modo producción: los errores no muestran detalles internos (rutas, claves).
+      # El detalle queda en `docker compose logs api` y storage/logs/laravel.log.
+      # Para buscar un error mientras programas: APP_DEBUG "true" y `docker compose up -d`.
+      APP_ENV: production
+      APP_DEBUG: "false"
     depends_on:
       db:
         condition: service_healthy

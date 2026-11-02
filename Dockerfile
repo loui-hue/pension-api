@@ -8,6 +8,8 @@ RUN apk add --no-cache postgresql-dev sqlite-dev libzip-dev icu-dev \
 RUN echo "upload_max_filesize=8M" > /usr/local/etc/php/conf.d/uploads.ini \
     && echo "post_max_size=10M" >> /usr/local/etc/php/conf.d/uploads.ini
 
+COPY docker/php-security.ini /usr/local/etc/php/conf.d/zz-security.ini
+
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
