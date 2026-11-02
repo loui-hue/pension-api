@@ -16,14 +16,18 @@ use App\Http\Controllers\Api\ReportController;
 Route::post('/login', [AuthController::class, 'login']);
 
 // Rutas protegidas
-Route::middleware('auth:sanctum')->group(function () {
+// password.changed: con contraseña temporal solo se permite /me, /me/password y /logout.
+Route::middleware(['auth:sanctum', 'password.changed'])->group(function () {
 
     // Auth
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
+    Route::post('/me/password', [AuthController::class, 'changePassword']);
 
     // Usuarios
     Route::apiResource('users', UserController::class);
+    Route::post('customers', [UserController::class, 'storeCustomer']);
+    Route::post('customers/{id}/reset-password', [UserController::class, 'resetCustomerPassword']);
 
     // Categorías
     Route::apiResource('categories', CategoryController::class);
