@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\LoyaltyController;
 use App\Http\Controllers\Api\BadgeController;
 use App\Http\Controllers\Api\ChallengeController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\ReportController;
 // Rutas públicas
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -58,4 +59,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/challenges', [ChallengeController::class, 'store']);
     Route::post('/challenges/join', [ChallengeController::class, 'join']);
     Route::patch('/challenges/{id}/progress', [ChallengeController::class, 'updateProgress']);
+
+    // Reportes del Dashboard
+    Route::get('/reports/dashboard', [ReportController::class, 'dashboard']);
 });
