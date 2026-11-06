@@ -43,6 +43,8 @@ services:
     volumes:
       - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - public:/var/www/html/public:ro
+      # Página de descarga de la APK (http://<servidor>:8000/app/)
+      - ./docker/descargas:/usr/share/nginx/descargas:ro
     depends_on:
       - api
 

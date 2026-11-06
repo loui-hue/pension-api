@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pensión Doña Roberta — Descargar app</title>
+<!-- Página servida por el servidor local (sin Internet): todo va incluido aquí, sin recursos externos.
+     En celular se ve en una columna; en computadora o proyector ocupa toda la pantalla en dos columnas. -->
+<style>
+  :root { --fondo:#3E2723; --tarjeta:#5D4037; --naranja:#E07B39; --acento:#FFB74D; --crema:#F5E6C8; --suave:rgba(245,230,200,.72); }
+  * { box-sizing: border-box; }
+  html, body { height:100%; }
+  body { margin:0; background:linear-gradient(160deg,#3E2723 0%,#4E342E 55%,#3E2723 100%); color:var(--crema);
+         font-family: "Poppins", "Segoe UI", Roboto, Arial, sans-serif; line-height:1.45; }
+  main { min-height:100vh; padding:28px 18px 32px; display:grid; gap:18px; max-width:560px; margin:0 auto; }
+
+  .portada { text-align:center; display:flex; flex-direction:column; align-items:center; }
+  .logo { width:72px; height:72px; margin:4px 0 8px; }
+  h1 { font-size:1.6rem; margin:0; }
+  .sub { color:var(--acento); margin:4px 0 22px; }
+  .boton { display:flex; align-items:center; justify-content:center; gap:10px; width:100%; padding:16px;
+           border-radius:30px; background:var(--naranja); color:var(--crema); font-size:1.15rem; font-weight:700;
+           text-decoration:none; box-shadow:0 4px 14px rgba(0,0,0,.3); }
+  .boton:active { transform:scale(.98); }
+  .detalle { color:var(--suave); font-size:.85rem; margin:8px 0 0; }
+
+  .tarjeta { background:var(--tarjeta); border-radius:18px; padding:18px 20px; }
+  h2 { font-size:1.05rem; color:var(--acento); margin:0 0 10px; }
+  ol { margin:0; padding-left:22px; } li { margin:7px 0; }
+  b { color:#fff; }
+  table { width:100%; border-collapse:collapse; font-size:.92rem; }
+  td { padding:7px 4px; border-bottom:1px solid rgba(255,255,255,.08); vertical-align:top; }
+  td:first-child { color:var(--acento); font-weight:600; white-space:nowrap; padding-right:10px; }
+  code { font-family:Consolas,"Courier New",monospace; background:rgba(0,0,0,.25); padding:1px 5px; border-radius:4px; color:#fff; }
+
+  .qr { text-align:center; }
+  .qr img { width:220px; max-width:70%; height:auto; background:#fff; padding:10px; border-radius:14px; image-rendering:pixelated; }
+  .qr p { margin:10px 0 0; color:var(--suave); font-size:.9rem; }
+  .red { display:inline-block; margin-top:12px; padding:6px 14px; border-radius:20px; background:rgba(0,0,0,.25); font-size:.9rem; }
+
+  .aviso { display:none; background:#7a2e1f; border-radius:16px; padding:14px 18px; }
+  .pie { text-align:center; color:var(--suave); font-size:.78rem; margin:0; }
+
+  /* Orden en celular: portada, botón, pasos, cuentas, QR. */
+  .portada { order:1 } .aviso { order:2 } .pasos { order:3 } .cuentas { order:4 } .qr { order:5 } .pie { order:6 }
+
+  /* Computadora / proyector: toda la pantalla, dos columnas. */
+  @media (min-width: 900px) {
+    main { max-width:none; width:100%; padding:3vh 5vw; gap:2vh 3vw;
+           grid-template-columns: minmax(0,1fr) minmax(0,1.1fr);
+           grid-template-areas: "portada pasos" "qr cuentas" "pie pie";
+           align-content:center; }
+    .portada { grid-area:portada; justify-content:center; }
+    .pasos   { grid-area:pasos; }
+    .qr      { grid-area:qr; display:flex; flex-direction:column; justify-content:center; align-items:center; }
+    .cuentas { grid-area:cuentas; }
+    .pie     { grid-area:pie; font-size:.95rem; }
+    .aviso   { grid-column:1 / -1; }
+
+    .logo { width:clamp(72px,9vh,110px); height:auto; }
+    h1 { font-size:clamp(2rem,3.4vw,3.2rem); }
+    .sub { font-size:clamp(1rem,1.4vw,1.35rem); margin-bottom:2vh; }
+    .boton { max-width:460px; font-size:clamp(1.15rem,1.5vw,1.5rem); padding:2vh 24px; }
+    .detalle { font-size:1rem; }
+    .tarjeta { padding:2.6vh 2vw; }
+    h2 { font-size:clamp(1.1rem,1.5vw,1.45rem); }
+    li, table { font-size:clamp(.95rem,1.15vw,1.15rem); }
+    li { margin:.6vh 0; }
+    td { padding:.8vh 4px; }
+    .qr img { width:clamp(200px,25vh,360px); max-width:100%; }
+    .qr p { font-size:clamp(.95rem,1.1vw,1.1rem); }
+  }
+</style>
+</head>
+<body>
+<main>
+  <section class="portada">
+    <svg class="logo" viewBox="0 0 24 24" aria-hidden="true"><path fill="#E07B39" d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/></svg>
+    <h1>Pensión Doña Roberta</h1>
+    <p class="sub">Sistema de pedidos y fidelización</p>
+    <a class="boton" href="pension-dona-roberta.apk" download>
+      <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M5 20h14v-2H5v2zM19 9h-4V3H9v6H5l7 7 7-7z"/></svg>
+      Descargar la app
+    </a>
+    <p class="detalle">Android · APK_TAMANO MB · versión del APK_FECHA</p>
+  </section>
+
+  <div class="aviso" id="aviso-ios">
+    <b>Esta app es para Android.</b> En iPhone no se puede instalar: pide uno de los celulares de demostración.
+  </div>
+
+  <section class="tarjeta pasos">
+    <h2>Cómo instalarla</h2>
+    <ol>
+      <li>Conéctate a la red Wi-Fi <b>Pension-Dona-Roberta</b>.</li>
+      <li>Toca <b>Descargar la app</b> o escanea el código QR, y espera a que termine.</li>
+      <li>Abre el archivo descargado (toca <b>Abrir</b> en el aviso de descarga).</li>
+      <li>Si Android pide permiso para <b>instalar apps desconocidas</b>, toca <b>Configuración</b>, activa <b>Permitir</b> y vuelve atrás.</li>
+      <li>Toca <b>Instalar</b>. Si aparece un aviso de Play Protect, elige <b>Instalar de todas formas</b>: la app no está en Play Store porque funciona en la red local de la pensión.</li>
+      <li>Abre <b>pension_app</b> e inicia sesión con una de las cuentas de demostración.</li>
+    </ol>
+  </section>
+
+  <section class="tarjeta qr">
+    <h2>Descarga directa con QR</h2>
+    <img src="qr-apk.png" alt="Código QR que descarga directamente la app">
+    <p>Escanéalo con la cámara del celular: la app se descarga al instante.</p>
+    <span class="red">Wi-Fi: <b>Pension-Dona-Roberta</b></span>
+  </section>
+
+  <section class="tarjeta cuentas">
+    <h2>Cuentas de demostración</h2>
+    <table>
+      <tr><td>Administrador</td><td><code>admin@pension.com</code> · <code>admin123</code></td></tr>
+      <tr><td>Mesero</td><td><code>mesero@pension.com</code> · <code>mesero123</code></td></tr>
+      <tr><td>Cocina</td><td><code>cocina@pension.com</code> · <code>cocina123</code></td></tr>
+      <tr><td>Caja</td><td><code>caja@pension.com</code> · <code>caja123</code></td></tr>
+      <tr><td>Comensal</td><td><code>cliente@pension.com</code> · <code>cliente123</code></td></tr>
+    </table>
+  </section>
+
+  <p class="pie">El sistema funciona en la red local de la pensión, sin depender de Internet.</p>
+</main>
+<script>
+  if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) document.getElementById('aviso-ios').style.display = 'block';
+</script>
+</body>
+</html>
