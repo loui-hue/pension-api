@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\LoyaltyPoint;
 use App\Models\Order;
 use App\Models\PaymentMethod;
+use App\Models\Role;
 use App\Models\Streak;
 use App\Models\Table;
 use App\Models\User;
@@ -33,6 +34,7 @@ class PagoFidelizacionIntegracionTest extends TestCase
             'email' => 'cajero@test.local',
             'password' => 'secreto123',
         ]);
+        $cajero->roles()->attach(Role::create(['name' => 'caja']));   // solo caja puede cobrar
         Sanctum::actingAs($cajero);
 
         $mesa = Table::create(['number' => 5, 'capacity' => 2, 'status' => 'ocupada']);

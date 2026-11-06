@@ -109,16 +109,43 @@ class OrderController extends Controller
         return response()->json($order->load(['user', 'waiter', 'table', 'items.product']));
     }
 
+    /**
+     * Estados que cada rol puede asignar. "pagado" no está en ninguno: solo se
+     * llega por el cobro (PaymentController), que además acredita el XP.
+     */
+    private const ESTADOS_POR_ROL = [
+        'cocina' => ['en_preparacion', 'listo'],
+        'mesero' => ['en_preparacion', 'entregado', 'cancelado'],   // "Enviar a cocina", entregar, cancelar
+        'caja' => ['en_preparacion', 'entregado', 'cancelado'],
+        'administrador' => ['pendiente', 'en_preparacion', 'listo', 'entregado', 'cancelado'],
+    ];
+
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:pendiente,en_preparacion,listo,entregado,pagado,cancelado',
+            'status' => 'required|in:pendiente,en_preparacion,listo,entregado,cancelado',
+        ], [
+            'status.in' => 'Estado no válido. Un pedido se marca como pagado solo al cobrarlo en caja.',
         ]);
 
+        $permitidos = collect(self::ESTADOS_POR_ROL)
+            ->only($request->user()->roles->pluck('name'))
+            ->flatten()
+            ->unique();
+        if (!$permitidos->contains($request->status)) {
+            return response()->json([
+                'message' => 'Tu rol no puede cambiar el pedido a "' . str_replace('_', ' ', $request->status) . '"',
+            ], 403);
+        }
+
         $order = Order::findOrFail($id);
+        if (in_array($order->status, ['pagado', 'cancelado'])) {
+            return response()->json(['message' => "El pedido #{$order->id} ya está {$order->status}"], 422);
+        }
+
         $order->update(['status' => $request->status]);
 
-        if (in_array($request->status, ['pagado', 'cancelado'])) {
+        if ($request->status === 'cancelado') {
             Table::findOrFail($order->table_id)->update(['status' => 'disponible']);
         }
 

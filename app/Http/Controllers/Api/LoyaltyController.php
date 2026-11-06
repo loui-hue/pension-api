@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\LoyaltyPoint;
+use App\Models\Streak;
 use App\Models\User;
 use App\Services\LoyaltyService;
 use Illuminate\Http\Request;
@@ -37,9 +38,22 @@ class LoyaltyController extends Controller
         return response()->json($loyalty, 201);
     }
 
+    /**
+     * Consulta la racha del usuario. Solo lee: la visita se registra al pagar un
+     * pedido (PaymentController), no al abrir la pantalla de fidelización.
+     */
     public function streak(Request $request)
     {
-        $streak = $this->loyaltyService->registerVisit($request->user());
+        $streak = Streak::firstOrNew(
+            ['user_id' => $request->user()->id],
+            ['current_streak' => 0, 'longest_streak' => 0]
+        );
+
+        // Si la última visita fue antes de ayer, la racha ya se cortó.
+        if ($streak->last_visit && $streak->last_visit->lt(now()->subDay()->startOfDay())) {
+            $streak->current_streak = 0;
+        }
+
         return response()->json($streak);
     }
 }
