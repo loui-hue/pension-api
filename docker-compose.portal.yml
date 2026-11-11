@@ -52,6 +52,9 @@ services:
     volumes:
       - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - public:/var/www/html/public:ro
+      # Página de descarga de la app (https://PORTAL_HOST/app/): se descarga desde
+      # cualquier lugar, sin depender del servidor de la pensión.
+      - ./docker/descargas:/usr/share/nginx/descargas:ro
     depends_on:
       - api
     networks: [interna, proxy]
