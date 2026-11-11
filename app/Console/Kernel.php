@@ -12,7 +12,8 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // $schedule->command('inspire')->hourly();
+        // Copia de los datos de los comensales al portal en la nube (si está configurado).
+        $schedule->command('portal:sincronizar')->everyFiveMinutes()->withoutOverlapping();
     }
 
     /**

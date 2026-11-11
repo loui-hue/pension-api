@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\PortalSync;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -30,7 +31,16 @@ class AuthController extends Controller
                 'message' => 'Credenciales incorrectas'
             ], 401);
         }
-        $token = $user->createToken('auth_token')->plainTextToken;
+
+        // En el portal en la nube solo entran comensales, a consultar su avance.
+        $enPortal = config('portal.modo') === 'portal';
+        if ($enPortal && !$user->hasRole('cliente')) {
+            return response()->json([
+                'message' => 'Fuera de la pensión solo pueden entrar los comensales',
+            ], 403);
+        }
+
+        $token = $user->createToken($enPortal ? PortalSync::TOKEN_PORTAL : 'auth_token')->plainTextToken;
 
         return response()->json([
             'message' => 'Login exitoso',

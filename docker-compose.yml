@@ -35,6 +35,21 @@ services:
       # Archivos subidos (imagen del QR de la pensión): sobreviven a reconstrucciones
       - uploads:/var/www/html/storage/app
 
+  # Tareas programadas: cada 5 minutos envía al portal en la nube la copia de los
+  # datos de los comensales (si .env tiene PORTAL_SYNC_URL y PORTAL_SYNC_TOKEN).
+  scheduler:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      APP_ENV: production
+      APP_DEBUG: "false"
+    entrypoint: ["php", "artisan", "schedule:work"]
+    depends_on:
+      - api
+
   nginx:
     image: nginx:1.27-alpine
     restart: unless-stopped
