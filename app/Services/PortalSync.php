@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -24,6 +25,19 @@ class PortalSync
 
     /** Nombre de los tokens creados al iniciar sesión en el portal (no vienen de la pensión). */
     public const TOKEN_PORTAL = 'portal_token';
+
+    /**
+     * Envía la copia al portal apenas termina la petición actual (cobro, pedido...),
+     * sin que el usuario espere. Si no hay Internet no pasa nada: la revisión de
+     * cada minuto la envía cuando vuelva la conexión.
+     */
+    public static function programar(): void
+    {
+        if (config('portal.modo') !== 'local' || !config('portal.sync_url')) {
+            return;
+        }
+        dispatch(fn () => Artisan::call('portal:sincronizar'))->afterResponse();
+    }
 
     /** Arma la copia en el servidor de la pensión. Solo datos de comensales. */
     public function snapshot(): array
@@ -71,16 +85,10 @@ class PortalSync
         return DB::transaction(function () use ($tablas) {
             $passwordsAntes = DB::table('users')->pluck('password', 'id');
 
-            // 1) Insertar o actualizar, de padres a hijas.
-            foreach (self::TABLAS as $tabla) {
-                $filas = array_map(fn ($f) => (array) $f, $tablas[$tabla] ?? []);
-                foreach (array_chunk($filas, 500) as $lote) {
-                    $columnas = array_values(array_diff(array_keys($lote[0]), ['id']));
-                    DB::table($tabla)->upsert($lote, ['id'], $columnas);
-                }
-            }
-
-            // 2) Borrar lo que ya no está en la pensión, de hijas a padres.
+            // 1) Primero borrar lo que ya no está en la pensión, de hijas a padres.
+            //    Va antes que insertar: si en la pensión un dato cambió de id (p. ej. al
+            //    volver a sembrar la base), el registro viejo con el mismo nombre o correo
+            //    se quita antes y no choca con los índices únicos (roles.name, users.email).
             foreach (array_reverse(self::TABLAS) as $tabla) {
                 $ids = array_column(array_map(fn ($f) => (array) $f, $tablas[$tabla] ?? []), 'id');
                 $consulta = DB::table($tabla);
@@ -89,6 +97,15 @@ class PortalSync
                     $consulta->where('name', '!=', self::TOKEN_PORTAL);
                 }
                 $ids ? $consulta->whereNotIn('id', $ids)->delete() : $consulta->delete();
+            }
+
+            // 2) Insertar o actualizar, de padres a hijas.
+            foreach (self::TABLAS as $tabla) {
+                $filas = array_map(fn ($f) => (array) $f, $tablas[$tabla] ?? []);
+                foreach (array_chunk($filas, 500) as $lote) {
+                    $columnas = array_values(array_diff(array_keys($lote[0]), ['id']));
+                    DB::table($tabla)->upsert($lote, ['id'], $columnas);
+                }
             }
 
             // 3) Si en la pensión cambió la contraseña (o se restableció) o el comensal

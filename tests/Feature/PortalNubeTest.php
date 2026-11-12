@@ -13,8 +13,11 @@ use App\Models\Streak;
 use App\Models\Table;
 use App\Models\User;
 use App\Services\PortalSync;
+use App\Models\PaymentMethod;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 /**
@@ -106,6 +109,26 @@ class PortalNubeTest extends TestCase
         $this->withToken($token)->getJson('/api/badges/user')->assertOk();
     }
 
+    public function test_la_copia_se_aplica_aunque_en_el_portal_haya_datos_con_otros_ids(): void
+    {
+        // Lo que pasó el 11/11: el portal tenía otro rol "cliente" y otro comensal con
+        // el mismo correo pero con ids distintos (datos de prueba que llegaron por error).
+        config(['portal.modo' => 'local']);
+        $copia = app(PortalSync::class)->snapshot();
+
+        config(['portal.modo' => 'portal']);
+        foreach (array_reverse(PortalSync::TABLAS) as $tabla) {
+            DB::table($tabla)->delete();
+        }
+        DB::table('roles')->insert(['id' => 999, 'name' => 'cliente']);
+        DB::table('users')->insert(['id' => 999, 'name' => 'Viejo', 'email' => 'ana@test.local', 'password' => 'x']);
+
+        $this->withToken('secreto-de-prueba')->postJson('/api/portal/sync', $copia)->assertOk();
+
+        $this->assertSame([$this->ana->id], DB::table('users')->pluck('id')->all());
+        $this->assertSame(1, DB::table('roles')->where('name', 'cliente')->count());
+    }
+
     public function test_sin_el_token_correcto_no_se_puede_sincronizar(): void
     {
         config(['portal.modo' => 'portal']);
@@ -113,6 +136,41 @@ class PortalNubeTest extends TestCase
         $this->postJson('/api/portal/sync', ['tablas' => []])->assertUnauthorized();
         $this->withToken('otro')->postJson('/api/portal/sync', ['tablas' => []])->assertUnauthorized();
         $this->assertSame(1, User::where('email', 'ana@test.local')->count());   // nada se borró
+    }
+
+    public function test_al_cobrar_en_la_pension_se_envia_la_copia_al_portal_sin_boton(): void
+    {
+        Http::fake(['*' => Http::response(['message' => 'Sincronizado', 'filas' => []])]);
+        config(['portal.modo' => 'local', 'portal.sync_url' => 'https://portal.prueba']);
+
+        $caja = User::create(['name' => 'Caja', 'email' => 'caja@test.local', 'password' => 'caja12345']);
+        $caja->roles()->attach(Role::create(['name' => 'caja']));
+        Sanctum::actingAs($caja);
+
+        $pedido = Order::create(['user_id' => $this->ana->id, 'table_id' => Table::first()->id, 'status' => 'entregado', 'total' => 20]);
+        $efectivo = PaymentMethod::create(['name' => 'Efectivo']);
+
+        $this->postJson('/api/payments', ['order_id' => $pedido->id, 'payment_method_id' => $efectivo->id, 'amount' => 20])
+            ->assertCreated();
+
+        // La copia salió sola tras el cobro, con el XP nuevo de Ana.
+        Http::assertSentCount(1);
+        $envio = Http::recorded()[0][0];
+        $this->assertSame('https://portal.prueba/api/portal/sync', $envio->url());
+        $this->assertSame(['Bearer secreto-de-prueba'], $envio->header('Authorization'));
+        $this->assertEquals(60, collect($envio['tablas']['loyalty_points'])->sum('points'));   // 40 + 20 del cobro
+    }
+
+    public function test_consultar_no_envia_copias_al_portal(): void
+    {
+        Http::fake();
+        config(['portal.modo' => 'local', 'portal.sync_url' => 'https://portal.prueba']);
+        Sanctum::actingAs($this->ana);
+
+        $this->getJson('/api/loyalty')->assertOk();
+        $this->getJson('/api/orders/my-orders')->assertOk();
+
+        Http::assertNothingSent();
     }
 
     public function test_en_la_pension_no_se_acepta_sincronizacion(): void

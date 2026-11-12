@@ -24,6 +24,11 @@ trait CreatesApplication
             throw new \RuntimeException("Pruebas abortadas: la conexión es '{$conexion}' ({$base}), se esperaba SQLite en memoria.");
         }
 
+        // Candado: las pruebas no pueden apuntar al portal real en la nube.
+        if ($app['config']->get('portal.sync_url') || $app['config']->get('portal.sync_token')) {
+            throw new \RuntimeException('Pruebas abortadas: PORTAL_SYNC_URL/TOKEN están definidos; las pruebas enviarían datos al portal real.');
+        }
+
         return $app;
     }
 }

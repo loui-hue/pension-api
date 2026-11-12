@@ -43,6 +43,7 @@ class Kernel extends HttpKernel
             \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \App\Http\Middleware\SoloRutasDelPortal::class,   // en la nube, solo consultas del comensal
+            \App\Http\Middleware\SincronizarPortalTrasCambios::class,   // en la pensión, copia al portal tras cada cambio
         ],
     ];
 

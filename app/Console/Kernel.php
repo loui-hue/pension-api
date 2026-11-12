@@ -13,7 +13,9 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         // Copia de los datos de los comensales al portal en la nube (si está configurado).
-        $schedule->command('portal:sincronizar')->everyFiveMinutes()->withoutOverlapping();
+        // Además de la copia inmediata tras cada cambio, esta revisión de cada minuto
+        // pone al día el portal apenas vuelve Internet después de un corte.
+        $schedule->command('portal:sincronizar')->everyMinute()->withoutOverlapping();
     }
 
     /**
