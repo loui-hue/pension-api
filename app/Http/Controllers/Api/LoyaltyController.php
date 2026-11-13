@@ -5,10 +5,16 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\LoyaltyPoint;
 use App\Models\Streak;
+use App\Models\User;
+use App\Services\LoyaltyService;
 use Illuminate\Http\Request;
 
 class LoyaltyController extends Controller
 {
+    public function __construct(private LoyaltyService $loyaltyService)
+    {
+    }
+
     public function index(Request $request)
     {
         $user = $request->user();
@@ -26,42 +32,27 @@ class LoyaltyController extends Controller
             'reason' => 'nullable|string',
         ]);
 
-        $loyalty = LoyaltyPoint::create([
-            'user_id' => $request->user_id,
-            'points' => $request->points,
-            'total_xp' => $request->points,
-            'reason' => $request->reason,
-        ]);
+        $user = User::findOrFail($request->user_id);
+        $loyalty = $this->loyaltyService->awardXp($user, $request->points, $request->reason);
 
         return response()->json($loyalty, 201);
     }
 
+    /**
+     * Consulta la racha del usuario. Solo lee: la visita se registra al pagar un
+     * pedido (PaymentController), no al abrir la pantalla de fidelización.
+     */
     public function streak(Request $request)
     {
-        $user = $request->user();
-        $streak = Streak::firstOrCreate(
-            ['user_id' => $user->id],
+        $streak = Streak::firstOrNew(
+            ['user_id' => $request->user()->id],
             ['current_streak' => 0, 'longest_streak' => 0]
         );
 
-        $today = now()->toDateString();
-
-        if ($streak->last_visit && $streak->last_visit->toDateString() === $today) {
-            return response()->json($streak);
+        // Si la última visita fue antes de ayer, la racha ya se cortó.
+        if ($streak->last_visit && $streak->last_visit->lt(now()->subDay()->startOfDay())) {
+            $streak->current_streak = 0;
         }
-
-        if ($streak->last_visit && $streak->last_visit->diffInDays(now()) === 1) {
-            $streak->current_streak += 1;
-        } else {
-            $streak->current_streak = 1;
-        }
-
-        if ($streak->current_streak > $streak->longest_streak) {
-            $streak->longest_streak = $streak->current_streak;
-        }
-
-        $streak->last_visit = $today;
-        $streak->save();
 
         return response()->json($streak);
     }

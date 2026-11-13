@@ -42,6 +42,8 @@ class Kernel extends HttpKernel
             // \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
             \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\SoloRutasDelPortal::class,   // en la nube, solo consultas del comensal
+            \App\Http\Middleware\SincronizarPortalTrasCambios::class,   // en la pensión, copia al portal tras cada cambio
         ],
     ];
 
@@ -60,6 +62,8 @@ class Kernel extends HttpKernel
         'can' => \Illuminate\Auth\Middleware\Authorize::class,
         'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
         'password.confirm' => \Illuminate\Auth\Middleware\RequirePassword::class,
+        'password.changed' => \App\Http\Middleware\EnsurePasswordChanged::class,
+        'role' => \App\Http\Middleware\RequireRole::class,
         'precognitive' => \Illuminate\Foundation\Http\Middleware\HandlePrecognitiveRequests::class,
         'signed' => \App\Http\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
