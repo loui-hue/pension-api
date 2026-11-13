@@ -18,11 +18,24 @@
         </include>
     </source>
     <php>
-        <env name="APP_ENV" value="testing"/>
+        <!-- force: el contenedor trae APP_ENV=production y APP_DEBUG=false de docker-compose -->
+        <env name="APP_ENV" value="testing" force="true"/>
+        <server name="APP_ENV" value="testing" force="true"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
-        <env name="CACHE_DRIVER" value="array"/>
-        <!-- <env name="DB_CONNECTION" value="sqlite"/> -->
-        <!-- <env name="DB_DATABASE" value=":memory:"/> -->
+        <!-- force: el contenedor trae CACHE_DRIVER=file y la caché pasaría de una prueba a otra -->
+        <env name="CACHE_DRIVER" value="array" force="true"/>
+        <server name="CACHE_DRIVER" value="array" force="true"/>
+        <env name="DB_CONNECTION" value="sqlite" force="true"/>
+        <env name="DB_DATABASE" value=":memory:" force="true"/>
+        <server name="DB_CONNECTION" value="sqlite" force="true"/>
+        <server name="DB_DATABASE" value=":memory:" force="true"/>
+        <!-- force: las pruebas NUNCA deben enviar copias al portal real en la nube -->
+        <env name="PORTAL_SYNC_URL" value="" force="true"/>
+        <server name="PORTAL_SYNC_URL" value="" force="true"/>
+        <env name="PORTAL_SYNC_TOKEN" value="" force="true"/>
+        <server name="PORTAL_SYNC_TOKEN" value="" force="true"/>
+        <env name="APP_MODE" value="local" force="true"/>
+        <server name="APP_MODE" value="local" force="true"/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="PULSE_ENABLED" value="false"/>
         <env name="QUEUE_CONNECTION" value="sync"/>

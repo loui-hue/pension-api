@@ -11,6 +11,7 @@ class Order extends Model
 
     protected $fillable = [
         'user_id',
+        'waiter_id',
         'table_id',
         'status',
         'notes',
@@ -20,6 +21,11 @@ class Order extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function waiter()
+    {
+        return $this->belongsTo(User::class, 'waiter_id');
     }
 
     public function table()
@@ -32,8 +38,14 @@ class Order extends Model
         return $this->hasMany(OrderItem::class);
     }
 
+    // Puede haber varios intentos (p. ej. un QR rechazado y luego efectivo); payment() es el último.
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
+
     public function payment()
     {
-        return $this->hasOne(Payment::class);
+        return $this->hasOne(Payment::class)->latestOfMany();
     }
 }

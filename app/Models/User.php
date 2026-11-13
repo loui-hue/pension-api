@@ -17,6 +17,9 @@ class User extends Authenticatable
         'phone',
         'avatar',
         'password',
+        'must_change_password',
+        'password_reset_by',
+        'password_reset_at',
         'status',
     ];
 
@@ -28,11 +31,18 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'must_change_password' => 'boolean',
+        'password_reset_at' => 'datetime',
     ];
 
     public function roles()
     {
         return $this->belongsToMany(Role::class, 'role_user');
+    }
+
+    public function hasRole(string $role): bool
+    {
+        return $this->roles->contains('name', $role);
     }
 
     public function orders()

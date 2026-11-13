@@ -27,4 +27,14 @@ class Handler extends ExceptionHandler
             //
         });
     }
+
+    /**
+     * Las rutas del API siempre responden en JSON (401, 404, 422...), aunque el
+     * cliente no envíe "Accept: application/json"; así nunca intentan redirigir
+     * a una página de login que no existe.
+     */
+    protected function shouldReturnJson($request, Throwable $e)
+    {
+        return $request->is('api/*') || parent::shouldReturnJson($request, $e);
+    }
 }

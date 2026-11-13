@@ -12,6 +12,8 @@ class Authenticate extends Middleware
      */
     protected function redirectTo(Request $request): ?string
     {
-        return $request->expectsJson() ? null : route('login');
+        // Es solo un API: no existe página de login a la cual redirigir.
+        // Sin sesión se responde 401 en vez de un error 500 "Route [login] not defined".
+        return null;
     }
 }
