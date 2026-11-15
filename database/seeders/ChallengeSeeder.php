@@ -12,7 +12,7 @@ class ChallengeSeeder extends Seeder
         $challenges = [
             [
                 'name' => 'Semana Completa',
-                'description' => 'Visita la pensión 5 días seguidos',
+                'description' => 'Visita la pensión 5 días distintos',
                 'xp_reward' => 100,
                 'goal' => 5,
                 'type' => 'visitas',
