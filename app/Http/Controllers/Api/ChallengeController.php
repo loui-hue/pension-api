@@ -26,6 +26,7 @@ class ChallengeController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'xp_reward' => 'required|integer|min:0',
+            'goal' => 'sometimes|integer|min:1',
             'type' => 'required|in:visitas,compras,gastronomico,especial',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
@@ -41,7 +42,7 @@ class ChallengeController extends Controller
     {
         $user = $request->user();
         $challenges = $user->challenges()
-            ->withPivot('status', 'progress', 'completed_at')
+            ->withPivot('status', 'progress', 'current_count', 'completed_at')
             ->get();
         return response()->json($challenges);
     }
@@ -78,28 +79,19 @@ class ChallengeController extends Controller
             'progress' => 'required|integer|min:0|max:100',
         ]);
 
+        // Registro manual del administrador: para los retos "especial", que no
+        // dependen de los pagos (los demás avanzan solos al cobrar un pedido).
         $userChallenge = UserChallenge::findOrFail($id);
-        $yaEstabaCompletado = $userChallenge->status === 'completado';
-        $userChallenge->progress = $request->progress;
 
-        if ($request->progress >= 100 && !$yaEstabaCompletado) {
-            $userChallenge->status = 'completado';
-            $userChallenge->completed_at = now();
-            $userChallenge->save();
-
-            $challenge = Challenge::findOrFail($userChallenge->challenge_id);
-            if ($challenge->xp_reward > 0) {
-                $this->loyaltyService->awardXp(
-                    $userChallenge->user,
-                    $challenge->xp_reward,
-                    "Reto completado: {$challenge->name}"
-                );
-            }
-
-            return response()->json($userChallenge);
+        if ($request->progress >= 100) {
+            $this->loyaltyService->completeChallenge($userChallenge);
+            return response()->json($userChallenge->fresh());
         }
 
-        $userChallenge->save();
+        if ($userChallenge->status !== 'completado') {
+            $userChallenge->progress = $request->progress;
+            $userChallenge->save();
+        }
         return response()->json($userChallenge);
     }
 }
