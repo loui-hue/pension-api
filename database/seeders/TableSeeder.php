@@ -7,19 +7,17 @@ use App\Models\Table;
 
 class TableSeeder extends Seeder
 {
+    /** Las 10 mesas de la pensión (entrevista con los propietarios, 20/10/2026). */
+    public const MESAS = [
+        1 => 4, 2 => 4, 3 => 6, 4 => 6, 5 => 2,
+        6 => 8, 7 => 4, 8 => 4, 9 => 2, 10 => 6,
+    ];
+
     public function run(): void
     {
-        $tables = [
-            ['number' => 1, 'capacity' => 4, 'status' => 'disponible'],
-            ['number' => 2, 'capacity' => 4, 'status' => 'disponible'],
-            ['number' => 3, 'capacity' => 6, 'status' => 'disponible'],
-            ['number' => 4, 'capacity' => 6, 'status' => 'disponible'],
-            ['number' => 5, 'capacity' => 2, 'status' => 'disponible'],
-            ['number' => 6, 'capacity' => 8, 'status' => 'disponible'],
-        ];
-
-        foreach ($tables as $table) {
-            Table::create($table);
+        // Idempotente: crea las que falten y no toca el estado de las que ya existen.
+        foreach (self::MESAS as $numero => $capacidad) {
+            Table::firstOrCreate(['number' => $numero], ['capacity' => $capacidad, 'status' => 'disponible']);
         }
     }
 }
