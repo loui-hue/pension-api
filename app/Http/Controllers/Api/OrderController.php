@@ -32,6 +32,17 @@ class OrderController extends Controller
             'user_id' => 'nullable|exists:users,id',
         ]);
 
+        // Solo se piden productos de la carta de hoy (el menú del día de otro día no).
+        $idsPedidos = collect($request->items)->pluck('product_id')->unique();
+        $deHoy = Product::disponiblesHoy()->whereIn('id', $idsPedidos)->pluck('id');
+        $noDisponibles = Product::whereIn('id', $idsPedidos->diff($deHoy))->pluck('name');
+        if ($noDisponibles->isNotEmpty()) {
+            return response()->json([
+                'message' => 'No disponible hoy: ' . $noDisponibles->join(', '),
+                'errors' => ['items' => ['Hay productos que no están en la carta de hoy']],
+            ], 422);
+        }
+
         // El comensal es quien acumula XP al pagar. Si el pedido lo hace un cliente
         // desde su app, es él mismo; si lo registra el personal, debe elegir al comensal.
         $creador = $request->user();
