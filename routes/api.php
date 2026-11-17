@@ -92,11 +92,13 @@ Route::middleware(['auth:sanctum', 'password.changed'])->group(function () {
 
     // Retos: el comensal se une; solo el administrador crea retos o registra su avance.
     Route::get('/challenges', [ChallengeController::class, 'index']);
+    Route::get('/challenges/gestion', [ChallengeController::class, 'gestion'])->middleware('role:administrador');
     Route::get('/challenges/user', [ChallengeController::class, 'userChallenges']);
     Route::post('/challenges/join', [ChallengeController::class, 'join'])->middleware('role:cliente');
     Route::middleware('role:administrador')->group(function () {
         Route::post('/challenges', [ChallengeController::class, 'store']);
-        Route::patch('/challenges/{id}/progress', [ChallengeController::class, 'updateProgress']);
+        Route::get('/challenges/{id}/participantes', [ChallengeController::class, 'participantes']);
+        Route::patch('/challenges/{id}/progress', [ChallengeController::class, 'updateProgress']);   // {id}: participación; suma 1 (solo retos especiales)
     });
 
     // Reportes del Dashboard
