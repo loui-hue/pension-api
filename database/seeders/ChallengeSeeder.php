@@ -41,10 +41,12 @@ class ChallengeSeeder extends Seeder
                 'active' => true,
             ],
             [
-                'name' => 'Sabio de la Pensión',
-                'description' => 'Responde 10 preguntas gastronómicas correctamente',
+                // Reto especial: el personal lo verifica en persona y el administrador
+                // registra el avance (PATCH /challenges/{id}/progress).
+                'name' => 'Cliente Recomendador',
+                'description' => 'Trae a 3 amigos nuevos a la pensión',
                 'xp_reward' => 250,
-                'goal' => 10,
+                'goal' => 3,
                 'type' => 'especial',
                 'start_date' => now(),
                 'end_date' => now()->addDays(30),
