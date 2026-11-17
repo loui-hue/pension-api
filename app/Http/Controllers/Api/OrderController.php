@@ -32,15 +32,8 @@ class OrderController extends Controller
             'user_id' => 'nullable|exists:users,id',
         ]);
 
-        // Solo se piden productos de la carta de hoy (el menú del día de otro día no).
-        $idsPedidos = collect($request->items)->pluck('product_id')->unique();
-        $deHoy = Product::disponiblesHoy()->whereIn('id', $idsPedidos)->pluck('id');
-        $noDisponibles = Product::whereIn('id', $idsPedidos->diff($deHoy))->pluck('name');
-        if ($noDisponibles->isNotEmpty()) {
-            return response()->json([
-                'message' => 'No disponible hoy: ' . $noDisponibles->join(', '),
-                'errors' => ['items' => ['Hay productos que no están en la carta de hoy']],
-            ], 422);
+        if ($error = $this->rechazarSiNoSonDeHoy($request->items)) {
+            return $error;
         }
 
         // El comensal es quien acumula XP al pagar. Si el pedido lo hace un cliente
@@ -75,23 +68,7 @@ class OrderController extends Controller
                 'total' => 0,
             ]);
 
-            $total = 0;
-            foreach ($request->items as $item) {
-                $product = Product::findOrFail($item['product_id']);
-                $subtotal = $product->price * $item['quantity'];
-                $total += $subtotal;
-
-                OrderItem::create([
-                    'order_id' => $order->id,
-                    'product_id' => $item['product_id'],
-                    'quantity' => $item['quantity'],
-                    'unit_price' => $product->price,
-                    'subtotal' => $subtotal,
-                    'notes' => $item['notes'] ?? null,
-                ]);
-            }
-
-            $order->update(['total' => $total]);
+            $this->guardarPlatos($order, $request->items);
             Table::findOrFail($request->table_id)->update(['status' => 'ocupada']);
 
             return $order;
@@ -107,23 +84,101 @@ class OrderController extends Controller
         return response()->json($order);
     }
 
+    /**
+     * Modifica un pedido: mesa, notas y, mientras siga "pendiente" (aún no pasó a
+     * cocina), también sus platos. Es el cambio de último momento del comensal:
+     * agregar, quitar o cambiar cantidades. Los subtotales y el total se recalculan
+     * con el precio vigente y solo se aceptan productos de la carta de hoy.
+     */
     public function update(Request $request, $id)
     {
         $validated = $request->validate([
             'table_id' => 'sometimes|required|exists:tables,id',
             'notes' => 'nullable|string',
+            'items' => 'sometimes|required|array|min:1',
+            'items.*.product_id' => 'required_with:items|exists:products,id',
+            'items.*.quantity' => 'required_with:items|integer|min:1',
         ]);
 
         $order = Order::findOrFail($id);
-        $order->update($validated);
 
-        return response()->json($order->load(['user', 'waiter', 'table', 'items.product']));
+        if ($request->has('items')) {
+            if ($order->status !== 'pendiente') {
+                return response()->json([
+                    'message' => "El pedido #{$order->id} ya está " . (self::NOMBRE_ESTADO[$order->status] ?? $order->status)
+                        . ': solo se pueden cambiar los platos mientras está pendiente, antes de enviarlo a cocina',
+                ], 422);
+            }
+            if ($error = $this->rechazarSiNoSonDeHoy($request->items)) {
+                return $error;
+            }
+        }
+
+        DB::transaction(function () use ($order, $validated, $request) {
+            $mesaAnterior = $order->table_id;
+            $order->update(collect($validated)->only(['table_id', 'notes'])->all());
+
+            if ($request->has('items')) {
+                $order->items()->delete();
+                $this->guardarPlatos($order, $request->items);
+            }
+
+            if ((int) $order->table_id !== (int) $mesaAnterior) {
+                Table::whereKey($mesaAnterior)->update(['status' => 'disponible']);
+                Table::whereKey($order->table_id)->update(['status' => 'ocupada']);
+            }
+        });
+
+        return response()->json($order->fresh()->load(['user', 'waiter', 'table', 'items.product']));
+    }
+
+    /** Solo se piden productos de la carta de hoy (el menú del día de otro día no). */
+    private function rechazarSiNoSonDeHoy(array $items)
+    {
+        $idsPedidos = collect($items)->pluck('product_id')->unique();
+        $deHoy = Product::disponiblesHoy()->whereIn('id', $idsPedidos)->pluck('id');
+        $noDisponibles = Product::whereIn('id', $idsPedidos->diff($deHoy))->pluck('name');
+        if ($noDisponibles->isEmpty()) {
+            return null;
+        }
+
+        return response()->json([
+            'message' => 'No disponible hoy: ' . $noDisponibles->join(', '),
+            'errors' => ['items' => ['Hay productos que no están en la carta de hoy']],
+        ], 422);
+    }
+
+    /** Crea los platos del pedido con el precio vigente y recalcula el total. */
+    private function guardarPlatos(Order $order, array $items): void
+    {
+        $total = 0;
+        foreach ($items as $item) {
+            $product = Product::findOrFail($item['product_id']);
+            $subtotal = $product->price * $item['quantity'];
+            $total += $subtotal;
+
+            OrderItem::create([
+                'order_id' => $order->id,
+                'product_id' => $item['product_id'],
+                'quantity' => $item['quantity'],
+                'unit_price' => $product->price,
+                'subtotal' => $subtotal,
+                'notes' => $item['notes'] ?? null,
+            ]);
+        }
+
+        $order->update(['total' => $total]);
     }
 
     /**
      * Estados que cada rol puede asignar. "pagado" no está en ninguno: solo se
      * llega por el cobro (PaymentController), que además acredita el XP.
      */
+    private const NOMBRE_ESTADO = [
+        'en_preparacion' => 'en preparación', 'listo' => 'listo', 'entregado' => 'entregado',
+        'pagado' => 'pagado', 'cancelado' => 'cancelado',
+    ];
+
     private const ESTADOS_POR_ROL = [
         'cocina' => ['en_preparacion', 'listo'],
         'mesero' => ['en_preparacion', 'entregado', 'cancelado'],   // "Enviar a cocina", entregar, cancelar

@@ -61,7 +61,7 @@ Route::middleware(['auth:sanctum', 'password.changed'])->group(function () {
         Route::get('orders/{order}', [OrderController::class, 'show']);
         Route::patch('orders/{id}/status', [OrderController::class, 'updateStatus']);
     });
-    Route::match(['put', 'patch'], 'orders/{order}', [OrderController::class, 'update'])->middleware('role:mesero');
+    Route::match(['put', 'patch'], 'orders/{order}', [OrderController::class, 'update'])->middleware('role:mesero,caja');   // mesa, notas y platos (si sigue pendiente)
     Route::delete('orders/{order}', [OrderController::class, 'destroy'])->middleware('role:administrador');
 
     // Pagos: caja cobra y confirma; el administrador configura los métodos (QR, cuenta).
