@@ -33,4 +33,12 @@ return [
         'api/orders/my-orders',
         'api/portal/sync',
     ],
+
+    // La carta de la pensión: el comensal fuera de la pensión la consulta para ver el
+    // menú del día, pero no puede pedir ni modificarla (solo GET).
+    'rutas_portal_solo_consulta' => [
+        'api/categories',
+        'api/products',
+        'api/products/menu-semana',
+    ],
 ];
