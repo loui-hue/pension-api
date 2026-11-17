@@ -14,11 +14,14 @@ class UserChallenge extends Model
         'challenge_id',
         'status',
         'progress',
+        'current_count',
+        'last_counted_on',
         'completed_at',
     ];
 
     protected $casts = [
         'completed_at' => 'datetime',
+        'last_counted_on' => 'date',
     ];
 
     public function user()

@@ -18,6 +18,8 @@ Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:10
 Route::get('/ping', [PortalController::class, 'ping']);
 // Portal en la nube: recibe la copia de la pensión (protegida con PORTAL_SYNC_TOKEN).
 Route::post('/portal/sync', [PortalController::class, 'sync']);
+// Pensión: acepta la sesión que el comensal inició fuera (en el portal) al entrar al Wi-Fi.
+Route::post('/portal/traer-sesion', [PortalController::class, 'traerSesion'])->middleware('throttle:10,1');
 
 // Rutas protegidas
 // password.changed: con contraseña temporal solo se permite /me, /me/password y /logout.
@@ -39,6 +41,7 @@ Route::middleware(['auth:sanctum', 'password.changed'])->group(function () {
 
     // Menú: todos lo ven (el cliente arma su pedido); solo el administrador lo modifica.
     Route::apiResource('categories', CategoryController::class)->only(['index', 'show']);
+    Route::get('products/menu-semana', [ProductController::class, 'menuSemana']);   // antes de products/{id}
     Route::apiResource('products', ProductController::class)->only(['index', 'show']);
     Route::middleware('role:administrador')->group(function () {
         Route::apiResource('categories', CategoryController::class)->except(['index', 'show']);

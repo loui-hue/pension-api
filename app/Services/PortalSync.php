@@ -39,6 +39,27 @@ class PortalSync
         dispatch(fn () => Artisan::call('portal:sincronizar'))->afterResponse();
     }
 
+    /**
+     * En la pensión: registra un token creado en el portal (ya validado con él), con
+     * su mismo id, para que la sesión siga sirviendo dentro de la red de la pensión.
+     * Como se llama TOKEN_PORTAL, no se vuelve a enviar al portal en la copia.
+     */
+    public function aceptarTokenDelPortal(User $user, string $plano): void
+    {
+        [$id, $secreto] = explode('|', $plano, 2);
+
+        DB::table('personal_access_tokens')->upsert([[
+            'id' => (int) $id,
+            'tokenable_type' => User::class,
+            'tokenable_id' => $user->id,
+            'name' => self::TOKEN_PORTAL,
+            'token' => hash('sha256', $secreto),
+            'abilities' => '["*"]',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]], ['id'], ['tokenable_id', 'token', 'updated_at']);
+    }
+
     /** Arma la copia en el servidor de la pensión. Solo datos de comensales. */
     public function snapshot(): array
     {

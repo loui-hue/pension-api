@@ -201,7 +201,7 @@ class PaymentController extends Controller
         return Storage::response($method->qr_image_path);
     }
 
-    /** Pedido pagado: libera la mesa y acredita XP y racha al comensal. */
+    /** Pedido pagado: libera la mesa y acredita XP, racha y avance de retos al comensal. */
     private function completarPedido(Payment $payment): void
     {
         $order = $payment->order;
@@ -213,6 +213,7 @@ class PaymentController extends Controller
             $xpGanado = max(5, (int) round($payment->amount));
             $this->loyaltyService->awardXp($comensal, $xpGanado, "Pedido #{$order->id} pagado");
             $this->loyaltyService->registerVisit($comensal);
+            $this->loyaltyService->advanceChallenges($comensal, $order);
         }
     }
 

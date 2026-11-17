@@ -13,6 +13,7 @@ class Challenge extends Model
         'name',
         'description',
         'xp_reward',
+        'goal',
         'type',
         'start_date',
         'end_date',
@@ -23,10 +24,11 @@ class Challenge extends Model
         'start_date' => 'date',
         'end_date' => 'date',
         'active' => 'boolean',
+        'goal' => 'integer',
     ];
 
     public function users()
     {
-        return $this->belongsToMany(User::class, 'user_challenges')->withPivot('status', 'progress', 'completed_at');
+        return $this->belongsToMany(User::class, 'user_challenges')->withPivot('status', 'progress', 'current_count', 'completed_at');
     }
 }
