@@ -105,8 +105,29 @@ class PortalNubeTest extends TestCase
         $token = $this->postJson('/api/login', ['email' => '71234567', 'password' => 'ana12345'])
             ->assertOk()->json('token');
         $this->withToken($token)->postJson('/api/orders', [])->assertNotFound();
-        $this->withToken($token)->getJson('/api/products')->assertNotFound();
+        $this->withToken($token)->getJson('/api/tables')->assertNotFound();
         $this->withToken($token)->getJson('/api/badges/user')->assertOk();
+    }
+
+    public function test_fuera_de_la_pension_el_comensal_ve_la_carta_pero_no_puede_cambiarla(): void
+    {
+        $this->sincronizarAlPortal();
+
+        // La carta llega al portal con la copia y se puede consultar.
+        $this->withToken($this->tokenPension)->getJson('/api/products')->assertOk()
+            ->assertJsonPath('0.name', 'Sopa de maní');
+        $this->withToken($this->tokenPension)->getJson('/api/categories')->assertOk();
+        $this->withToken($this->tokenPension)->getJson('/api/products/menu-semana')->assertOk();
+
+        // Pero solo para mirar: ni pedir ni tocar la carta.
+        $sopa = Product::first();
+        $this->withToken($this->tokenPension)->postJson('/api/products', ['name' => 'X'])->assertNotFound();
+        $this->withToken($this->tokenPension)->putJson("/api/products/{$sopa->id}", ['price' => 1])->assertNotFound();
+        $this->withToken($this->tokenPension)->deleteJson("/api/products/{$sopa->id}")->assertNotFound();
+        $this->withToken($this->tokenPension)->postJson('/api/orders', [
+            'items' => [['product_id' => $sopa->id, 'quantity' => 1]],
+        ])->assertNotFound();
+        $this->assertEquals(10, $sopa->fresh()->price);
     }
 
     public function test_la_copia_se_aplica_aunque_en_el_portal_haya_datos_con_otros_ids(): void
