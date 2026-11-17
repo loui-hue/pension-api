@@ -15,6 +15,20 @@ class ProductController extends Controller
         return response()->json($products);
     }
 
+    /**
+     * Menú del día de toda la semana (lunes a sábado), solo para consultar:
+     * se puede pedir únicamente el del día (ver index y OrderController).
+     */
+    public function menuSemana()
+    {
+        $menu = Product::with('category')
+            ->where('available', true)
+            ->whereNotNull('day_of_week')
+            ->orderBy('day_of_week')->orderBy('id')
+            ->get();
+        return response()->json($menu);
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([

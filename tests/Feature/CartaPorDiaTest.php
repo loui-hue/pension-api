@@ -56,7 +56,7 @@ class CartaPorDiaTest extends TestCase
         $this->travelTo(Carbon::parse(self::LUNES));
         $nombres = $this->nombresDeHoy();
 
-        foreach (['Silpancho', 'Asado', 'Chuleta', 'Gelatina', 'Refresco CIN de mocochinchi',
+        foreach (['Silpancho', 'Asado', 'Chuleta', 'Gelatina', 'Refresco CIN sabor Mocochinchi',
                   'Corbatines + Chuleta', 'Corbatines + Tomatada de pollo', 'Solo sopa: Corbatines'] as $esperado) {
             $this->assertContains($esperado, $nombres);
         }
@@ -122,5 +122,17 @@ class CartaPorDiaTest extends TestCase
             'table_id' => $mesa->id,
             'items' => [['product_id' => $menuLunes->id, 'quantity' => 1]],
         ])->assertCreated();
+    }
+
+    public function test_el_menu_de_la_semana_se_puede_consultar_cualquier_dia(): void
+    {
+        $this->travelTo(Carbon::parse(self::LUNES));
+        $semana = collect($this->getJson('/api/products/menu-semana')->assertOk()->json());
+
+        $this->assertEquals([1, 2, 3, 4, 5, 6], $semana->pluck('day_of_week')->unique()->values()->all());
+        $this->assertContains('Chairo + Falso conejo', $semana->pluck('name'));     // martes
+        $this->assertContains('Caldo de pollo', $semana->pluck('name'));            // sábado
+        $this->assertNotContains('Silpancho', $semana->where('day_of_week', null)->pluck('name'));
+        $this->assertCount(16, $semana);   // 5 días x 3 opciones + el caldo del sábado
     }
 }

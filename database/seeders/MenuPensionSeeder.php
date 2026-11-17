@@ -39,11 +39,11 @@ class MenuPensionSeeder extends Seeder
             [$principales, 'Asado', 'Plato principal', 16],
             [$principales, 'Chuleta', 'Plato principal', 16],
 
-            [$bebidas, 'Jugo del Sol de tumbo', 'Jugo natural del Sol', 15],
-            [$bebidas, 'Jugo del Sol de manzana', 'Jugo natural del Sol', 15],
-            [$bebidas, 'Jugo del Sol de durazno', 'Jugo natural del Sol', 15],
-            [$bebidas, 'Jugo del Sol de guinda', 'Jugo natural del Sol', 15],
-            [$bebidas, 'Refresco CIN de mocochinchi', 'Refresco CIN', 16],
+            [$bebidas, 'Jugo natural sabor Tumbo', 'Jugo natural del Sol', 15],
+            [$bebidas, 'Jugo natural sabor Manzana', 'Jugo natural del Sol', 15],
+            [$bebidas, 'Jugo natural sabor Durazno', 'Jugo natural del Sol', 15],
+            [$bebidas, 'Jugo natural sabor Guinda', 'Jugo natural del Sol', 15],
+            [$bebidas, 'Refresco CIN sabor Mocochinchi', 'Refresco CIN', 16],
             [$bebidas, 'Refresco del día (vaso)', 'Refresco del día en vaso', 3],
             [$bebidas, 'Refresco del día (jarra 1/2 L)', 'Jarra de medio litro', 8],
 
