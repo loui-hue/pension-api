@@ -16,7 +16,23 @@ class Product extends Model
         'available',
         'image',
         'category_id',
+        'day_of_week',
     ];
+
+    protected $casts = [
+        'available' => 'boolean',
+        'day_of_week' => 'integer',
+    ];
+
+    /**
+     * Lo que se puede pedir hoy: los productos de todos los días más el menú del
+     * día que corresponde (1 = lunes … 6 = sábado; el domingo la pensión no atiende).
+     */
+    public function scopeDisponiblesHoy($query)
+    {
+        return $query->where('available', true)
+            ->where(fn ($q) => $q->whereNull('day_of_week')->orWhere('day_of_week', now()->dayOfWeekIso));
+    }
 
     public function category()
     {

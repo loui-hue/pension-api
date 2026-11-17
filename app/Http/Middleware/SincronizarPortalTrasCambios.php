@@ -17,7 +17,9 @@ use Symfony\Component\HttpFoundation\Response;
 class SincronizarPortalTrasCambios
 {
     // Peticiones que no cambian datos de comensales (POST /loyalty/streak solo consulta la racha).
-    private const NO_CUENTAN = ['api/login', 'api/logout', 'api/ping', 'api/portal/sync', 'api/loyalty/streak'];
+    // El inicio de sesión sí cuenta: su token pasa al portal enseguida, y si el comensal
+    // sale de la pensión y usa datos móviles, el portal ya reconoce su sesión.
+    private const NO_CUENTAN = ['api/logout', 'api/ping', 'api/portal/sync', 'api/portal/traer-sesion', 'api/loyalty/streak'];
 
     public function handle(Request $request, Closure $next): Response
     {

@@ -12,7 +12,7 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             UserSeeder::class,
             CategorySeeder::class,
-            ProductSeeder::class,
+            MenuPensionSeeder::class,   // carta real (reemplaza a la carta de ejemplo de ProductSeeder)
             TableSeeder::class,
             PaymentMethodSeeder::class,
             BadgeSeeder::class,
