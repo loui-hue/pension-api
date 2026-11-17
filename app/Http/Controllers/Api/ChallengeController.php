@@ -73,25 +73,67 @@ class ChallengeController extends Controller
         return response()->json($userChallenge, 201);
     }
 
-    public function updateProgress(Request $request, $id)
+    /** Pantalla "Gestionar retos": todos los retos (también inactivos) con cuántos se unieron. */
+    public function gestion()
     {
-        $request->validate([
-            'progress' => 'required|integer|min:0|max:100',
-        ]);
+        return response()->json(
+            Challenge::withCount('users as participantes')->orderByDesc('active')->orderBy('id')->get()
+        );
+    }
 
-        // Registro manual del administrador: para los retos "especial", que no
-        // dependen de los pagos (los demás avanzan solos al cobrar un pedido).
-        $userChallenge = UserChallenge::findOrFail($id);
+    /** Comensales unidos a un reto, con su avance hacia la meta (p. ej. 1 de 3). */
+    public function participantes($id)
+    {
+        $reto = Challenge::findOrFail($id);
+        $participaciones = UserChallenge::with('user:id,name,email,phone')
+            ->where('challenge_id', $reto->id)
+            ->orderByRaw("status = 'completado'")
+            ->orderBy('id')
+            ->get()
+            ->map(fn (UserChallenge $p) => [
+                'id' => $p->id,
+                'user' => $p->user,
+                'status' => $p->status,
+                'current_count' => (int) $p->current_count,
+                'goal' => max(1, (int) $reto->goal),
+                'progress' => (int) $p->progress,
+                'completed_at' => $p->completed_at,
+            ]);
 
-        if ($request->progress >= 100) {
-            $this->loyaltyService->completeChallenge($userChallenge);
-            return response()->json($userChallenge->fresh());
+        return response()->json(['challenge' => $reto, 'participantes' => $participaciones]);
+    }
+
+    /**
+     * Registro manual del administrador, solo para los retos "especial" (los demás
+     * avanzan solos al cobrar un pedido). Cada registro suma una unidad verificada en
+     * persona (p. ej. un amigo nuevo que vino a la pensión); al llegar a la meta el
+     * reto se completa y otorga su XP una sola vez.
+     * {id} es la participación del comensal (user_challenges.id).
+     */
+    public function updateProgress($id)
+    {
+        $participacion = UserChallenge::with('challenge')->findOrFail($id);
+        $reto = $participacion->challenge;
+
+        if ($reto->type !== 'especial') {
+            return response()->json([
+                'message' => "El reto «{$reto->name}» avanza solo al cobrar los pedidos: no se registra a mano",
+            ], 422);
+        }
+        if ($participacion->status === 'completado') {
+            return response()->json(['message' => "Este comensal ya completó el reto «{$reto->name}»"], 422);
         }
 
-        if ($userChallenge->status !== 'completado') {
-            $userChallenge->progress = $request->progress;
-            $userChallenge->save();
+        $meta = max(1, (int) $reto->goal);
+        $participacion->current_count += 1;
+        $participacion->progress = min(100, intdiv($participacion->current_count * 100, $meta));
+        $participacion->status = 'en_progreso';
+        $participacion->save();
+
+        if ($participacion->current_count >= $meta) {
+            $this->loyaltyService->completeChallenge($participacion);
         }
-        return response()->json($userChallenge);
+
+        return response()->json($participacion->fresh());
     }
 }
