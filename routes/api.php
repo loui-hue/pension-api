@@ -18,6 +18,8 @@ Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:10
 Route::get('/ping', [PortalController::class, 'ping']);
 // Portal en la nube: recibe la copia de la pensión (protegida con PORTAL_SYNC_TOKEN).
 Route::post('/portal/sync', [PortalController::class, 'sync']);
+// Pensión: acepta la sesión que el comensal inició fuera (en el portal) al entrar al Wi-Fi.
+Route::post('/portal/traer-sesion', [PortalController::class, 'traerSesion'])->middleware('throttle:10,1');
 
 // Rutas protegidas
 // password.changed: con contraseña temporal solo se permite /me, /me/password y /logout.
