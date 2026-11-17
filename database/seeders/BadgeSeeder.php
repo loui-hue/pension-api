@@ -11,7 +11,7 @@ class BadgeSeeder extends Seeder
     {
         $badges = [
             ['name' => 'Primer Pedido', 'description' => 'Realizaste tu primer pedido', 'xp_required' => 0, 'type' => 'compras'],
-            ['name' => 'Cliente Frecuente', 'description' => 'Visitaste 10 veces la pensión', 'xp_required' => 100, 'type' => 'visitas'],
+            ['name' => 'Cliente Frecuente', 'description' => 'Eres cliente frecuente de la pensión: la casa te invita un refresco del día', 'xp_required' => 100, 'type' => 'visitas'],
             ['name' => 'Racha de Fuego', 'description' => 'Visitaste 7 días seguidos', 'xp_required' => 200, 'type' => 'visitas'],
             ['name' => 'Gourmet', 'description' => 'Probaste todos los platos del menú', 'xp_required' => 300, 'type' => 'compras'],
             ['name' => 'Retador', 'description' => 'Completaste tu primer reto', 'xp_required' => 150, 'type' => 'retos'],
