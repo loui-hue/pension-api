@@ -42,6 +42,7 @@ Route::middleware(['auth:sanctum', 'password.changed'])->group(function () {
     // Menú: todos lo ven (el cliente arma su pedido); solo el administrador lo modifica.
     Route::apiResource('categories', CategoryController::class)->only(['index', 'show']);
     Route::get('products/menu-semana', [ProductController::class, 'menuSemana']);   // antes de products/{id}
+    Route::get('products/gestion', [ProductController::class, 'gestion'])->middleware('role:administrador');   // todos, también los no disponibles
     Route::apiResource('products', ProductController::class)->only(['index', 'show']);
     Route::middleware('role:administrador')->group(function () {
         Route::apiResource('categories', CategoryController::class)->except(['index', 'show']);
