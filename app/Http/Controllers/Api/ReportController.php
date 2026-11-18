@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\LoyaltyPoint;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Payment;
+use App\Models\PaymentMethod;
 use App\Models\Streak;
 use App\Models\User;
 use App\Models\UserBadge;
@@ -95,6 +97,28 @@ class ReportController extends Controller
             ->distinct()
             ->count('user_id');
 
+        // Ventas por método de pago (control de caja): pagos completados del periodo,
+        // por la fecha en que se cobró (confirmed_at; si faltara, created_at del pago).
+        // Los pendientes y rechazados no suman.
+        $fechaDelPago = 'COALESCE(payments.confirmed_at, payments.created_at)';
+        $cobrado = Payment::query()
+            ->where('status', 'completado')
+            ->whereRaw("$fechaDelPago BETWEEN ? AND ?", [$from, $to])
+            ->groupBy('payment_method_id')
+            ->selectRaw('payment_method_id, COUNT(*) as payments, SUM(amount) as amount')
+            ->get()
+            ->keyBy('payment_method_id');
+        $porMetodo = PaymentMethod::orderBy('id')->get()->map(function ($metodo) use ($cobrado) {
+            $suma = $cobrado->get($metodo->id);
+            return [
+                'payment_method_id' => $metodo->id,
+                'name' => $metodo->name,
+                'payments' => (int) ($suma->payments ?? 0),
+                'amount' => round((float) ($suma->amount ?? 0), 2),
+            ];
+        })->values();
+        $porConfirmar = Payment::where('status', 'pendiente');
+
         return response()->json([
             'period' => [
                 'from' => $from->toDateString(),
@@ -112,6 +136,16 @@ class ReportController extends Controller
                 return $d;
             }, $porDia)),
             'top_products' => $topProductos,
+            'payments_by_method' => [
+                'methods' => $porMetodo,
+                'total_payments' => $porMetodo->sum('payments'),
+                'total_amount' => round($porMetodo->sum('amount'), 2),
+                // Pagos por QR o transferencia que caja todavía no confirma (en este momento).
+                'pending_confirmation' => [
+                    'payments' => (clone $porConfirmar)->count(),
+                    'amount' => round((float) (clone $porConfirmar)->sum('amount'), 2),
+                ],
+            ],
             'visits' => [
                 'unique_diners' => $comensalesUnicos,
                 'total_visits' => $totalVisitas,
