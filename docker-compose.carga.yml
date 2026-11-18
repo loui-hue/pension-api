@@ -1,0 +1,64 @@
+# ENTORNO DE PRUEBA SEPARADO para las pruebas de carga y concurrencia (Anexo H).
+# Otra base de datos (volumen propio), otro puerto (8100) y otro proyecto de compose:
+# NO toca la base de la pensión (puerto 8000) ni envía nada al portal en la nube.
+#
+#   docker compose -p pension-carga -f docker-compose.carga.yml up -d --build
+#   ... pruebas (ver carga/LEEME.md) ...
+#   docker compose -p pension-carga -f docker-compose.carga.yml down -v   # borra todo
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: pension_carga
+      POSTGRES_USER: carga
+      POSTGRES_PASSWORD: carga123
+    volumes:
+      - pgdata_carga:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U carga -d pension_carga"]
+      interval: 5s
+      retries: 10
+
+  api:
+    build: .
+    # Mismas variables que producción, pero sin el .env de la pensión.
+    environment: &entorno
+      APP_NAME: "Pension carga"
+      APP_ENV: production
+      APP_DEBUG: "false"
+      # Clave solo para este entorno de prueba desechable.
+      APP_KEY: "base64:5qAoibhpzbWQihzqRl1zJzxVScM1p1U0/BmksRnwC+E="
+      APP_MODE: local
+      LOG_CHANNEL: stderr
+      CACHE_DRIVER: file
+      SESSION_DRIVER: file
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_DATABASE: pension_carga
+      DB_USERNAME: carga
+      DB_PASSWORD: carga123
+      # Vacíos a propósito: este entorno nunca sincroniza con el portal real.
+      PORTAL_SYNC_URL: ""
+      PORTAL_SYNC_TOKEN: ""
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - public_carga:/var/www/html/public
+      # Los resultados de la prueba de carga quedan en la PC (carga/resultados).
+      - ./carga/resultados:/var/www/html/carga/resultados
+
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "8100:80"
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - public_carga:/var/www/html/public:ro
+    depends_on:
+      - api
+
+volumes:
+  pgdata_carga:
+  public_carga:

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
 use App\Models\Order;
+use App\Reglas\ReglasFidelizacion;
 use App\Services\LoyaltyService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -36,36 +37,39 @@ class PaymentController extends Controller
             'reference' => 'nullable|string',
         ]);
 
-        $order = Order::findOrFail($request->order_id);
-        if (in_array($order->status, ['pagado', 'cancelado'])) {
-            return response()->json([
-                'message' => "El pedido #{$order->id} ya está {$order->status}",
-            ], 422);
-        }
-        if ($order->payments()->where('status', 'pendiente')->exists()) {
-            return response()->json([
-                'message' => "El pedido #{$order->id} ya tiene un pago por confirmar",
-            ], 422);
-        }
-
         $method = PaymentMethod::findOrFail($request->payment_method_id);
 
-        // QR y transferencia: el pago queda pendiente hasta que caja verifique el depósito.
-        if ($method->requires_confirmation) {
-            $payment = Payment::create([
-                'order_id' => $order->id,
-                'payment_method_id' => $method->id,
-                'amount' => $request->amount,
-                'status' => 'pendiente',
-                'reference' => $request->reference,
-                'expires_at' => now()->addMinutes(Payment::MINUTOS_CONFIRMACION),
-            ]);
+        // Todo el cobro ocurre con el pedido BLOQUEADO (SELECT ... FOR UPDATE): si dos
+        // cajas cobran el mismo pedido a la vez, la segunda espera a que termine la
+        // primera y entonces ve que ya está pagado. Sin el bloqueo ambas pasaban la
+        // comprobación y quedaban dos pagos y el XP acreditado dos veces (RNF-03).
+        return $this->conPedidoBloqueado($request->order_id, function (Order $order) use ($request, $method) {
+            if (in_array($order->status, ['pagado', 'cancelado'])) {
+                return response()->json([
+                    'message' => "El pedido #{$order->id} ya está {$order->status}",
+                ], 422);
+            }
+            if ($order->payments()->where('status', 'pendiente')->exists()) {
+                return response()->json([
+                    'message' => "El pedido #{$order->id} ya tiene un pago por confirmar",
+                ], 422);
+            }
 
-            return response()->json($payment->load(['order', 'paymentMethod']), 201);
-        }
+            // QR y transferencia: el pago queda pendiente hasta que caja verifique el depósito.
+            if ($method->requires_confirmation) {
+                $payment = Payment::create([
+                    'order_id' => $order->id,
+                    'payment_method_id' => $method->id,
+                    'amount' => $request->amount,
+                    'status' => 'pendiente',
+                    'reference' => $request->reference,
+                    'expires_at' => now()->addMinutes(Payment::MINUTOS_CONFIRMACION),
+                ]);
 
-        // Efectivo y tarjeta se confirman en el acto.
-        $payment = DB::transaction(function () use ($request, $order, $method) {
+                return response()->json($payment->load(['order', 'paymentMethod']), 201);
+            }
+
+            // Efectivo y tarjeta se confirman en el acto.
             $payment = Payment::create([
                 'order_id' => $order->id,
                 'payment_method_id' => $method->id,
@@ -76,10 +80,9 @@ class PaymentController extends Controller
                 'confirmed_at' => now(),
             ]);
             $this->completarPedido($payment);
-            return $payment;
-        });
 
-        return response()->json($payment->load(['order', 'paymentMethod']), 201);
+            return response()->json($payment->load(['order', 'paymentMethod']), 201);
+        });
     }
 
     /**
@@ -93,12 +96,16 @@ class PaymentController extends Controller
         }
         $request->validate(['reference' => 'nullable|string|max:100']);
 
-        $payment = Payment::findOrFail($id);
-        if ($payment->status !== 'pendiente') {
-            return response()->json(['message' => "El pago ya está {$payment->status}"], 422);
-        }
+        $orderId = Payment::findOrFail($id)->order_id;
 
-        DB::transaction(function () use ($request, $payment) {
+        // Con el pedido y el pago bloqueados: dos confirmaciones a la vez del mismo
+        // pago acreditan el XP una sola vez (la segunda ve que ya está completado).
+        return $this->conPedidoBloqueado($orderId, function () use ($request, $id) {
+            $payment = Payment::lockForUpdate()->findOrFail($id);
+            if ($payment->status !== 'pendiente') {
+                return response()->json(['message' => "El pago ya está {$payment->status}"], 422);
+            }
+
             $payment->update([
                 'status' => 'completado',
                 'reference' => $request->reference ?: $payment->reference,
@@ -106,9 +113,9 @@ class PaymentController extends Controller
                 'confirmed_at' => now(),
             ]);
             $this->completarPedido($payment);
-        });
 
-        return response()->json($payment->fresh()->load(['order.user', 'paymentMethod', 'confirmedBy']));
+            return response()->json($payment->fresh()->load(['order.user', 'paymentMethod', 'confirmedBy']));
+        });
     }
 
     /** El depósito no llegó: el pedido vuelve a "por cobrar" para cobrarse de otra forma. */
@@ -118,18 +125,35 @@ class PaymentController extends Controller
             return $error;
         }
 
-        $payment = Payment::findOrFail($id);
-        if ($payment->status !== 'pendiente') {
-            return response()->json(['message' => "El pago ya está {$payment->status}"], 422);
-        }
+        $orderId = Payment::findOrFail($id)->order_id;
 
-        $payment->update([
-            'status' => 'rechazado',
-            'confirmed_by' => $request->user()->id,
-            'confirmed_at' => now(),
-        ]);
+        // Bloqueado igual que confirmar: un pago no puede quedar confirmado y rechazado a la vez.
+        return $this->conPedidoBloqueado($orderId, function () use ($request, $id) {
+            $payment = Payment::lockForUpdate()->findOrFail($id);
+            if ($payment->status !== 'pendiente') {
+                return response()->json(['message' => "El pago ya está {$payment->status}"], 422);
+            }
 
-        return response()->json($payment->load(['order.user', 'paymentMethod', 'confirmedBy']));
+            $payment->update([
+                'status' => 'rechazado',
+                'confirmed_by' => $request->user()->id,
+                'confirmed_at' => now(),
+            ]);
+
+            return response()->json($payment->load(['order.user', 'paymentMethod', 'confirmedBy']));
+        });
+    }
+
+    /**
+     * Ejecuta $accion en una transacción con la fila del pedido bloqueada
+     * (lockForUpdate). Las operaciones simultáneas sobre el mismo pedido esperan su
+     * turno; las de pedidos distintos siguen en paralelo.
+     */
+    private function conPedidoBloqueado(int $orderId, \Closure $accion)
+    {
+        return DB::transaction(function () use ($orderId, $accion) {
+            return $accion(Order::lockForUpdate()->findOrFail($orderId));
+        });
     }
 
     public function show($id)
@@ -210,7 +234,7 @@ class PaymentController extends Controller
 
         $comensal = $order->user;
         if ($comensal) {
-            $xpGanado = max(5, (int) round($payment->amount));
+            $xpGanado = ReglasFidelizacion::xpPorPago((float) $payment->amount);
             $this->loyaltyService->awardXp($comensal, $xpGanado, "Pedido #{$order->id} pagado");
             $this->loyaltyService->registerVisit($comensal);
             $this->loyaltyService->advanceChallenges($comensal, $order);

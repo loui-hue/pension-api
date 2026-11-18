@@ -100,21 +100,22 @@ class OrderController extends Controller
             'items.*.quantity' => 'required_with:items|integer|min:1',
         ]);
 
-        $order = Order::findOrFail($id);
+        Order::findOrFail($id);
+        if ($request->has('items') && ($error = $this->rechazarSiNoSonDeHoy($request->items))) {
+            return $error;
+        }
 
-        if ($request->has('items')) {
-            if ($order->status !== 'pendiente') {
+        // Con el pedido bloqueado: si el mesero lo modifica mientras otro lo envía a
+        // cocina, el cambio de platos espera y luego ve el estado real.
+        return DB::transaction(function () use ($id, $validated, $request) {
+            $order = Order::lockForUpdate()->findOrFail($id);
+            if ($request->has('items') && $order->status !== 'pendiente') {
                 return response()->json([
                     'message' => "El pedido #{$order->id} ya está " . (self::NOMBRE_ESTADO[$order->status] ?? $order->status)
                         . ': solo se pueden cambiar los platos mientras está pendiente, antes de enviarlo a cocina',
                 ], 422);
             }
-            if ($error = $this->rechazarSiNoSonDeHoy($request->items)) {
-                return $error;
-            }
-        }
 
-        DB::transaction(function () use ($order, $validated, $request) {
             $mesaAnterior = $order->table_id;
             $order->update(collect($validated)->only(['table_id', 'notes'])->all());
 
@@ -127,9 +128,9 @@ class OrderController extends Controller
                 Table::whereKey($mesaAnterior)->update(['status' => 'disponible']);
                 Table::whereKey($order->table_id)->update(['status' => 'ocupada']);
             }
-        });
 
-        return response()->json($order->fresh()->load(['user', 'waiter', 'table', 'items.product']));
+            return response()->json($order->fresh()->load(['user', 'waiter', 'table', 'items.product']));
+        });
     }
 
     /** Solo se piden productos de la carta de hoy (el menú del día de otro día no). */
@@ -204,18 +205,22 @@ class OrderController extends Controller
             ], 403);
         }
 
-        $order = Order::findOrFail($id);
-        if (in_array($order->status, ['pagado', 'cancelado'])) {
-            return response()->json(['message' => "El pedido #{$order->id} ya está {$order->status}"], 422);
-        }
+        // Con el pedido bloqueado (igual que al cobrar): un pedido no puede quedar
+        // cancelado y pagado a la vez si caja y mesero actúan al mismo tiempo.
+        return DB::transaction(function () use ($id, $request) {
+            $order = Order::lockForUpdate()->findOrFail($id);
+            if (in_array($order->status, ['pagado', 'cancelado'])) {
+                return response()->json(['message' => "El pedido #{$order->id} ya está {$order->status}"], 422);
+            }
 
-        $order->update(['status' => $request->status]);
+            $order->update(['status' => $request->status]);
 
-        if ($request->status === 'cancelado') {
-            Table::findOrFail($order->table_id)->update(['status' => 'disponible']);
-        }
+            if ($request->status === 'cancelado') {
+                Table::findOrFail($order->table_id)->update(['status' => 'disponible']);
+            }
 
-        return response()->json($order->load(['user', 'waiter', 'table', 'items.product']));
+            return response()->json($order->load(['user', 'waiter', 'table', 'items.product']));
+        });
     }
 
     public function destroy($id)
