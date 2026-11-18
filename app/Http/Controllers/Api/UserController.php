@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
@@ -98,25 +99,48 @@ class UserController extends Controller
         ]);
     }
 
+    /** Roles del personal que el administrador puede asignar desde «Usuarios». */
+    public const ROLES_PERSONAL = ['mesero', 'cocina', 'caja', 'administrador'];
+
+    private const MENSAJES_PERSONAL = [
+        'name.required' => 'Escribe el nombre.',
+        'email.required' => 'Escribe el correo.',
+        'email.email' => 'El correo no es válido.',
+        'email.unique' => 'Ya existe un usuario con ese correo.',
+        'phone.regex' => 'El celular debe tener solo números (7 a 15 dígitos).',
+        'phone.unique' => 'Ya existe un usuario con ese celular.',
+        'password.required' => 'Escribe la contraseña temporal.',
+        'password.min' => 'La contraseña temporal debe tener al menos 6 caracteres.',
+        'role.required' => 'Elige el rol.',
+        'role.in' => 'El rol debe ser mesero, cocina, caja o administrador.',
+    ];
+
+    /**
+     * El administrador crea una cuenta del personal con una contraseña temporal:
+     * la persona debe cambiarla en su primer ingreso.
+     */
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users',
-            'password' => 'required|min:6',
-            'phone' => 'nullable|string',
-            'role_id' => 'required|exists:roles,id',
-        ]);
+            'email' => 'required|email|max:255|unique:users,email',
+            'phone' => 'nullable|string|regex:/^[0-9]{7,15}$/|unique:users,phone',
+            'password' => 'required|string|min:6',
+            'role' => 'required|in:' . implode(',', self::ROLES_PERSONAL),
+        ], self::MENSAJES_PERSONAL);
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'phone' => $request->phone,
-            'status' => 'activo',
-        ]);
-
-        $user->roles()->attach($request->role_id);
+        $user = DB::transaction(function () use ($validated) {
+            $user = User::create([
+                'name' => trim($validated['name']),
+                'email' => mb_strtolower(trim($validated['email'])),
+                'phone' => $validated['phone'] ?? null,
+                'password' => Hash::make($validated['password']),
+                'must_change_password' => true,
+                'status' => 'activo',
+            ]);
+            $user->roles()->attach(Role::firstOrCreate(['name' => $validated['role']])->id);
+            return $user;
+        });
 
         return response()->json($user->load('roles'), 201);
     }
@@ -127,22 +151,62 @@ class UserController extends Controller
         return response()->json($user);
     }
 
+    /** Edita nombre, correo, celular y rol de una cuenta del personal. */
     public function update(Request $request, $id)
     {
         $user = User::findOrFail($id);
-        $user->update($request->only(['name', 'phone', 'status']));
-
-        if ($request->has('role_id')) {
-            $user->roles()->sync([$request->role_id]);
+        if ($user->hasRole('cliente')) {
+            return response()->json(['message' => 'Las cuentas de los comensales no se editan desde «Usuarios del personal».'], 422);
         }
 
-        return response()->json($user->load('roles'));
+        $validated = $request->validate([
+            'name' => 'sometimes|required|string|max:255',
+            'email' => 'sometimes|required|email|max:255|unique:users,email,' . $user->id,
+            'phone' => 'nullable|string|regex:/^[0-9]{7,15}$/|unique:users,phone,' . $user->id,
+            'role' => 'sometimes|required|in:' . implode(',', self::ROLES_PERSONAL),
+            'status' => 'sometimes|in:activo,inactivo',
+        ], self::MENSAJES_PERSONAL);
+
+        // El administrador no puede quitarse su propio rol (se quedaría sin acceso).
+        if ($user->is($request->user()) && isset($validated['role']) && $validated['role'] !== 'administrador') {
+            return response()->json(['message' => 'No puedes quitarte tu propio rol de administrador.'], 422);
+        }
+
+        DB::transaction(function () use ($user, $validated) {
+            $datos = collect($validated)->except('role')->all();
+            if (isset($datos['name'])) {
+                $datos['name'] = trim($datos['name']);
+            }
+            if (isset($datos['email'])) {
+                $datos['email'] = mb_strtolower(trim($datos['email']));
+            }
+            $user->update($datos);
+            if (isset($validated['role'])) {
+                $user->roles()->sync([Role::firstOrCreate(['name' => $validated['role']])->id]);
+            }
+        });
+
+        return response()->json($user->fresh()->load('roles'));
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         $user = User::findOrFail($id);
-        $user->delete();
-        return response()->json(['message' => 'Usuario eliminado']);
+        if ($user->is($request->user())) {
+            return response()->json(['message' => 'No puedes eliminar tu propia cuenta.'], 422);
+        }
+        if ($user->hasRole('cliente')) {
+            return response()->json(['message' => 'Las cuentas de los comensales no se eliminan desde «Usuarios del personal».'], 422);
+        }
+        // Borrar la cuenta borraría en cascada los pedidos que tenga a su nombre.
+        if ($user->orders()->exists()) {
+            return response()->json(['message' => "{$user->name} tiene pedidos registrados a su nombre: no se puede eliminar."], 422);
+        }
+        $nombre = $user->name;
+        DB::transaction(function () use ($user) {
+            $user->tokens()->delete();   // cierra sus sesiones abiertas
+            $user->delete();
+        });
+        return response()->json(['message' => "Cuenta de {$nombre} eliminada"]);
     }
 }
