@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Pruebas de concurrencia (RNF-03): se ejecutan SOLO en el entorno de prueba separado
+  (docker-compose.carga.yml), contra PostgreSQL real y el servidor real (Nginx + PHP-FPM),
+  porque SQLite en memoria no muestra las condiciones de carrera. Ver carga/LEEME.md.
+-->
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+>
+    <testsuites>
+        <testsuite name="Concurrencia">
+            <directory>tests/Concurrencia</directory>
+        </testsuite>
+    </testsuites>
+    <php>
+        <env name="APP_ENV" value="testing" force="true"/>
+        <env name="CACHE_DRIVER" value="array" force="true"/>
+        <env name="PORTAL_SYNC_URL" value="" force="true"/>
+        <env name="PORTAL_SYNC_TOKEN" value="" force="true"/>
+        <env name="APP_MODE" value="local" force="true"/>
+        <!-- La base es la del entorno de prueba (variables DB_* del contenedor). -->
+    </php>
+</phpunit>

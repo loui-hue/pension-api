@@ -1,0 +1,18 @@
+PHPUnit 10.5.63 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.2.35
+Configuration: /var/www/html/phpunit.concurrencia.xml
+
+
+[cobro en efectivo] 10 solicitudes simultáneas -> códigos {"422":9,"201":1} | pagos completados: 1 | acreditaciones de XP: 1
+.
+[pago por QR] 10 solicitudes simultáneas -> códigos {"422":9,"201":1} | pagos completados: 1 | acreditaciones de XP: 0
+.
+[confirmación de QR] 10 solicitudes simultáneas -> códigos {"200":1,"422":9} | pagos completados: 1 | acreditaciones de XP: 1
+.
+[cobrar y cancelar (estado final: pagado)] 10 solicitudes simultáneas -> códigos {"201":1,"422":9} | pagos completados: 1 | acreditaciones de XP: 1
+.                                                                4 / 4 (100%)
+
+Time: 00:02.073, Memory: 26.00 MB
+
+OK (4 tests, 11 assertions)
