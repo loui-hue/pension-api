@@ -11,6 +11,7 @@ use App\Models\UserChallenge;
 use App\Models\Streak;
 use App\Models\User;
 use App\Models\UserBadge;
+use App\Reglas\ReglasFidelizacion;
 
 class LoyaltyService
 {
@@ -45,15 +46,12 @@ class LoyaltyService
 
         $today = now()->toDateString();
 
-        if ($streak->last_visit && $streak->last_visit->toDateString() === $today) {
+        $ultimaVisita = $streak->last_visit?->toDateString();
+        if ($ultimaVisita === $today) {
             return $streak;
         }
 
-        if ($streak->last_visit && $streak->last_visit->diffInDays(now()) === 1) {
-            $streak->current_streak += 1;
-        } else {
-            $streak->current_streak = 1;
-        }
+        $streak->current_streak = ReglasFidelizacion::siguienteRacha($ultimaVisita, $today, (int) $streak->current_streak);
 
         if ($streak->current_streak > $streak->longest_streak) {
             $streak->longest_streak = $streak->current_streak;
@@ -94,12 +92,12 @@ class LoyaltyService
                 continue;
             }
 
-            $suma = match ($reto->type) {
-                'visitas' => $participacion->last_counted_on?->toDateString() === $hoy ? 0 : 1,
-                'compras' => 1,
-                'gastronomico' => $productosNuevos ??= $this->productosNuevos($user, $order),
-                default => 0,
-            };
+            $nuevos = $reto->type === 'gastronomico'
+                ? ($productosNuevos ??= $this->productosNuevos($user, $order))
+                : 0;
+            $suma = ReglasFidelizacion::avanceDelReto(
+                $reto->type, $participacion->last_counted_on?->toDateString(), $hoy, $nuevos
+            );
             if ($suma === 0) {
                 continue;
             }
@@ -107,11 +105,11 @@ class LoyaltyService
             $meta = max(1, (int) $reto->goal);
             $participacion->current_count += $suma;
             $participacion->last_counted_on = $hoy;
-            $participacion->progress = min(100, intdiv($participacion->current_count * 100, $meta));
+            $participacion->progress = ReglasFidelizacion::progreso($participacion->current_count, $meta);
             $participacion->status = 'en_progreso';
             $participacion->save();
 
-            if ($participacion->current_count >= $meta) {
+            if (ReglasFidelizacion::retoCompletado($participacion->current_count, $meta)) {
                 $this->completeChallenge($participacion);
             }
         }

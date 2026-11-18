@@ -1,0 +1,3 @@
+   api    CPU máx. 97.5 %  | memoria (última muestra) 77.79MiB / 7.575GiB
+   db     CPU máx. 17.6 %  | memoria (última muestra) 40.79MiB / 7.575GiB
+   nginx  CPU máx. 0.8 %  | memoria (última muestra) 12.33MiB / 7.575GiB

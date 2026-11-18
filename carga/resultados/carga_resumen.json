@@ -1,0 +1,246 @@
+{
+    "fecha": "2026-11-18 01:24:06",
+    "servidor": "Nginx 1.27 + PHP-FPM 8.2 (pm.max_children = 5) + PostgreSQL 16, en Docker",
+    "fases": {
+        "normal": {
+            "usuarios_virtuales": 9,
+            "roles": {
+                "mesero": 2,
+                "cocina": 2,
+                "caja": 1,
+                "cliente": 4
+            },
+            "segundos": 180,
+            "por_endpoint": {
+                "GET \/loyalty": {
+                    "solicitudes": 23,
+                    "promedio_ms": 14.8,
+                    "p95_ms": 16.2,
+                    "max_ms": 16.6,
+                    "errores": 0,
+                    "rechazos_422": 0
+                },
+                "GET \/orders": {
+                    "solicitudes": 96,
+                    "promedio_ms": 30.1,
+                    "p95_ms": 32.8,
+                    "max_ms": 64.7,
+                    "errores": 0,
+                    "rechazos_422": 0
+                },
+                "GET \/orders\/my-orders": {
+                    "solicitudes": 98,
+                    "promedio_ms": 33,
+                    "p95_ms": 32.6,
+                    "max_ms": 580.9,
+                    "errores": 0,
+                    "rechazos_422": 0
+                },
+                "GET \/payment-methods": {
+                    "solicitudes": 1,
+                    "promedio_ms": 578.6,
+                    "p95_ms": 578.6,
+                    "max_ms": 578.6,
+                    "errores": 0,
+                    "rechazos_422": 0
+                },
+                "GET \/products": {
+                    "solicitudes": 37,
+                    "promedio_ms": 34.1,
+                    "p95_ms": 26.9,
+                    "max_ms": 573.3,
+                    "errores": 0,
+                    "rechazos_422": 0
+                },
+                "GET \/tables": {
+                    "solicitudes": 14,
+                    "promedio_ms": 15,
+                    "p95_ms": 17,
+                    "max_ms": 17,
+                    "errores": 0,
+                    "rechazos_422": 0
+                },
+                "PATCH \/orders\/{id}\/status": {
+                    "solicitudes": 60,
+                    "promedio_ms": 27.6,
+                    "p95_ms": 31.1,
+                    "max_ms": 57.7,
+                    "errores": 0,
+                    "rechazos_422": 2
+                },
+                "PATCH \/payments\/{id}\/confirm": {
+                    "solicitudes": 2,
+                    "promedio_ms": 43,
+                    "p95_ms": 49.9,
+                    "max_ms": 49.9,
+                    "errores": 0,
+                    "rechazos_422": 0
+                },
+                "POST \/login": {
+                    "solicitudes": 8,
+                    "promedio_ms": 413.9,
+                    "p95_ms": 580.1,
+                    "max_ms": 580.1,
+                    "errores": 0,
+                    "rechazos_422": 0
+                },
+                "POST \/orders": {
+                    "solicitudes": 14,
+                    "promedio_ms": 29.2,
+                    "p95_ms": 32,
+                    "max_ms": 32,
+                    "errores": 0,
+                    "rechazos_422": 0
+                },
+                "POST \/payments": {
+                    "solicitudes": 30,
+                    "promedio_ms": 25.1,
+                    "p95_ms": 33,
+                    "max_ms": 41.9,
+                    "errores": 0,
+                    "rechazos_422": 20
+                }
+            },
+            "total": {
+                "solicitudes": 383,
+                "solicitudes_por_segundo": 2.1,
+                "promedio_ms": 38.4,
+                "p95_ms": 38.8,
+                "max_ms": 580.9,
+                "errores": 0,
+                "tasa_de_errores_pct": 0,
+                "rechazos_422": 22
+            }
+        },
+        "pico": {
+            "usuarios_virtuales": 30,
+            "roles": {
+                "mesero": 6,
+                "cocina": 4,
+                "caja": 2,
+                "cliente": 18
+            },
+            "segundos": 120,
+            "por_endpoint": {
+                "GET \/loyalty": {
+                    "solicitudes": 183,
+                    "promedio_ms": 14.9,
+                    "p95_ms": 16.1,
+                    "max_ms": 52.9,
+                    "errores": 0,
+                    "rechazos_422": 0
+                },
+                "GET \/orders": {
+                    "solicitudes": 167,
+                    "promedio_ms": 39.8,
+                    "p95_ms": 49.4,
+                    "max_ms": 52.9,
+                    "errores": 0,
+                    "rechazos_422": 0
+                },
+                "GET \/orders\/my-orders": {
+                    "solicitudes": 357,
+                    "promedio_ms": 25.4,
+                    "p95_ms": 29.4,
+                    "max_ms": 434.6,
+                    "errores": 0,
+                    "rechazos_422": 0
+                },
+                "GET \/payment-methods": {
+                    "solicitudes": 2,
+                    "promedio_ms": 32.1,
+                    "p95_ms": 46.2,
+                    "max_ms": 46.2,
+                    "errores": 0,
+                    "rechazos_422": 0
+                },
+                "GET \/products": {
+                    "solicitudes": 237,
+                    "promedio_ms": 20.5,
+                    "p95_ms": 24,
+                    "max_ms": 415.5,
+                    "errores": 0,
+                    "rechazos_422": 0
+                },
+                "GET \/tables": {
+                    "solicitudes": 54,
+                    "promedio_ms": 14.7,
+                    "p95_ms": 16,
+                    "max_ms": 21.9,
+                    "errores": 0,
+                    "rechazos_422": 0
+                },
+                "PATCH \/orders\/{id}\/status": {
+                    "solicitudes": 320,
+                    "promedio_ms": 27.2,
+                    "p95_ms": 30.4,
+                    "max_ms": 372.2,
+                    "errores": 0,
+                    "rechazos_422": 12
+                },
+                "PATCH \/payments\/{id}\/confirm": {
+                    "solicitudes": 12,
+                    "promedio_ms": 34.9,
+                    "p95_ms": 40.3,
+                    "max_ms": 40.3,
+                    "errores": 0,
+                    "rechazos_422": 0
+                },
+                "POST \/login": {
+                    "solicitudes": 8,
+                    "promedio_ms": 330.5,
+                    "p95_ms": 429.9,
+                    "max_ms": 429.9,
+                    "errores": 0,
+                    "rechazos_422": 0
+                },
+                "POST \/orders": {
+                    "solicitudes": 54,
+                    "promedio_ms": 28.3,
+                    "p95_ms": 33.4,
+                    "max_ms": 45,
+                    "errores": 0,
+                    "rechazos_422": 0
+                },
+                "POST \/payments": {
+                    "solicitudes": 76,
+                    "promedio_ms": 30.9,
+                    "p95_ms": 32.9,
+                    "max_ms": 455.4,
+                    "errores": 0,
+                    "rechazos_422": 42
+                }
+            },
+            "total": {
+                "solicitudes": 1470,
+                "solicitudes_por_segundo": 12.3,
+                "promedio_ms": 27.1,
+                "p95_ms": 44.1,
+                "max_ms": 455.4,
+                "errores": 0,
+                "tasa_de_errores_pct": 0,
+                "rechazos_422": 54
+            }
+        }
+    },
+    "consistencia": {
+        "pedidos": 72,
+        "pedidos_por_estado": {
+            "listo": 13,
+            "entregado": 12,
+            "pagado": 47
+        },
+        "pagos_completados": 47,
+        "problemas": {
+            "pedidos_con_dos_pagos_completados": 0,
+            "pedidos_con_dos_pagos_por_confirmar": 0,
+            "pedidos_con_total_distinto_a_sus_platos": 0,
+            "pedidos_pagados_sin_pago": 0,
+            "pagos_con_monto_distinto_al_total": 0,
+            "pedidos_con_xp_acreditado_mas_de_una_vez": 0,
+            "pedidos_pagados_sin_xp": 0,
+            "xp_de_pedidos_no_pagados": 0
+        },
+        "consistente": true
+    }
+}

@@ -1,0 +1,52 @@
+PRUEBA DE CARGA Y CONCURRENCIA — Pensión Doña Roberta (entorno de prueba, puerto 8100)
+Fecha: 2026-11-18 01:24:06
+Servidor: Nginx 1.27 + PHP-FPM 8.2 (pm.max_children = 5) + PostgreSQL 16, en Docker
+
+=== Fase 'normal': 9 usuarios virtuales simultáneos (2 mesero, 2 cocina, 1 caja, 4 cliente), 180 s ===
+Endpoint                         Solic.   Prom. ms    p95 ms  Máx. ms  Errores      422
+----------------------------------------------------------------------------------------
+GET /loyalty                         23       14.8      16.2      16.6        0        0
+GET /orders                          96       30.1      32.8      64.7        0        0
+GET /orders/my-orders                98       33.0      32.6     580.9        0        0
+GET /payment-methods                  1      578.6     578.6     578.6        0        0
+GET /products                        37       34.1      26.9     573.3        0        0
+GET /tables                          14       15.0      17.0      17.0        0        0
+PATCH /orders/{id}/status            60       27.6      31.1      57.7        0        2
+PATCH /payments/{id}/confirm          2       43.0      49.9      49.9        0        0
+POST /login                           8      413.9     580.1     580.1        0        0
+POST /orders                         14       29.2      32.0      32.0        0        0
+POST /payments                       30       25.1      33.0      41.9        0       20
+----------------------------------------------------------------------------------------
+TOTAL                               383       38.4      38.8     580.9        0       22
+Solicitudes por segundo: 2.1 | Tasa de errores: 0.00 %
+
+=== Fase 'pico': 30 usuarios virtuales simultáneos (6 mesero, 4 cocina, 2 caja, 18 cliente), 120 s ===
+Endpoint                         Solic.   Prom. ms    p95 ms  Máx. ms  Errores      422
+----------------------------------------------------------------------------------------
+GET /loyalty                        183       14.9      16.1      52.9        0        0
+GET /orders                         167       39.8      49.4      52.9        0        0
+GET /orders/my-orders               357       25.4      29.4     434.6        0        0
+GET /payment-methods                  2       32.1      46.2      46.2        0        0
+GET /products                       237       20.5      24.0     415.5        0        0
+GET /tables                          54       14.7      16.0      21.9        0        0
+PATCH /orders/{id}/status           320       27.2      30.4     372.2        0       12
+PATCH /payments/{id}/confirm         12       34.9      40.3      40.3        0        0
+POST /login                           8      330.5     429.9     429.9        0        0
+POST /orders                         54       28.3      33.4      45.0        0        0
+POST /payments                       76       30.9      32.9     455.4        0       42
+----------------------------------------------------------------------------------------
+TOTAL                              1470       27.1      44.1     455.4        0       54
+Solicitudes por segundo: 12.3 | Tasa de errores: 0.00 %
+
+=== Consistencia de los datos al terminar ===
+Pedidos: 72 | Pagos completados: 47
+Pedidos por estado: {"listo":13,"entregado":12,"pagado":47}
+  pedidos con dos pagos completados             0
+  pedidos con dos pagos por confirmar           0
+  pedidos con total distinto a sus platos       0
+  pedidos pagados sin pago                      0
+  pagos con monto distinto al total             0
+  pedidos con xp acreditado mas de una vez      0
+  pedidos pagados sin xp                        0
+  xp de pedidos no pagados                      0
+RESULTADO: datos consistentes.

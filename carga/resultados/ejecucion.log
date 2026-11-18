@@ -1,0 +1,197 @@
+1) Levantando el entorno de prueba (base nueva y vacía)...
+ Image pension-carga-api Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 559B 0.0s done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 1.10kB done
+#2 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/library/php:8.2-fpm-alpine
+#3 DONE 1.4s
+
+#4 [internal] load metadata for docker.io/library/composer:2
+#4 DONE 1.4s
+
+#5 [internal] load .dockerignore
+#5 transferring context: 207B 0.0s done
+#5 DONE 0.0s
+
+#6 [stage-0  1/12] FROM docker.io/library/php:8.2-fpm-alpine@sha256:d17bc39b8ef90e12d598f19cb466f1906c3c214f4bce661dfee49404b42fea09
+#6 resolve docker.io/library/php:8.2-fpm-alpine@sha256:d17bc39b8ef90e12d598f19cb466f1906c3c214f4bce661dfee49404b42fea09 0.0s done
+#6 DONE 0.0s
+
+#7 FROM docker.io/library/composer:2@sha256:0c8e663f14c94d07b3c45b175c51f5a14718508f21fe4dd7e54f09488dd0ed71
+#7 resolve docker.io/library/composer:2@sha256:0c8e663f14c94d07b3c45b175c51f5a14718508f21fe4dd7e54f09488dd0ed71 0.0s done
+#7 DONE 0.0s
+
+#8 [internal] load build context
+#8 transferring context: 42.80kB 0.0s done
+#8 DONE 0.0s
+
+#9 [stage-0  2/12] RUN apk add --no-cache postgresql-dev sqlite-dev libzip-dev icu-dev     && docker-php-ext-install pdo_pgsql pdo_sqlite zip intl opcache bcmath
+#9 CACHED
+
+#10 [stage-0  5/12] COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+#10 CACHED
+
+#11 [stage-0  6/12] WORKDIR /var/www/html
+#11 CACHED
+
+#12 [stage-0  7/12] COPY composer.json composer.lock ./
+#12 CACHED
+
+#13 [stage-0  4/12] COPY docker/php-security.ini /usr/local/etc/php/conf.d/zz-security.ini
+#13 CACHED
+
+#14 [stage-0  3/12] RUN echo "upload_max_filesize=8M" > /usr/local/etc/php/conf.d/uploads.ini     && echo "post_max_size=10M" >> /usr/local/etc/php/conf.d/uploads.ini
+#14 CACHED
+
+#15 [stage-0  8/12] RUN composer install --no-interaction --no-scripts --no-autoloader --prefer-dist
+#15 CACHED
+
+#16 [stage-0  9/12] COPY . .
+#16 DONE 0.1s
+
+#17 [stage-0 10/12] RUN touch .env && composer dump-autoload --optimize     && chown -R www-data:www-data storage bootstrap/cache
+#17 0.222 Generating optimized autoload files
+#17 0.914 > Illuminate\Foundation\ComposerScripts::postAutoloadDump
+#17 0.926 > @php artisan package:discover --ansi
+#17 1.019 
+#17 1.019   [37;44m INFO [39;49m Discovering packages.  
+#17 1.019 
+#17 1.022   laravel/sail [90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m [32;1mDONE[39;22m
+#17 1.023   laravel/sanctum [90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m [32;1mDONE[39;22m
+#17 1.025   laravel/tinker [90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m [32;1mDONE[39;22m
+#17 1.026   nesbot/carbon [90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m [32;1mDONE[39;22m
+#17 1.026   nunomaduro/collision [90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m [32;1mDONE[39;22m
+#17 1.027   nunomaduro/termwind [90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m [32;1mDONE[39;22m
+#17 1.027   spatie/laravel-ignition [90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m[90m.[39m [32;1mDONE[39;22m
+#17 1.027 
+#17 1.034 Generated optimized autoload files containing 6732 classes
+#17 DONE 1.1s
+
+#18 [stage-0 11/12] COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+#18 DONE 0.0s
+
+#19 [stage-0 12/12] RUN chmod +x /usr/local/bin/entrypoint.sh
+#19 DONE 0.2s
+
+#20 exporting to image
+#20 exporting layers
+#20 exporting layers 1.6s done
+#20 exporting manifest sha256:0aeba4d6143200560b1bf000d04657767cbf07eed543064d47df43b23042c9ea done
+#20 exporting config sha256:c7bdbd8e36ffd587652f65ba00619debfb215785aa5b6bc898f6d187232e39b5 done
+#20 exporting attestation manifest sha256:64906c2be5c4965d571304be87bb38f44cc7443e791c8f425f996147df7de967 done
+#20 exporting manifest list sha256:001f20689fe6ea0be4449972cfc81358cfd452b10c56039087636d8ec30905e2 done
+#20 naming to docker.io/library/pension-carga-api:latest done
+#20 unpacking to docker.io/library/pension-carga-api:latest
+#20 unpacking to docker.io/library/pension-carga-api:latest 0.3s done
+#20 DONE 2.0s
+
+#21 resolving provenance for metadata file
+#21 DONE 0.0s
+ Image pension-carga-api Built 
+ Network pension-carga_default Creating 
+ Network pension-carga_default Creating 
+ Volume pension-carga_public_carga Creating 
+ Volume pension-carga_pgdata_carga Creating 
+ Volume pension-carga_public_carga Creating 
+ Volume pension-carga_pgdata_carga Creating 
+ Volume pension-carga_public_carga Created 
+ Volume pension-carga_public_carga Created 
+ Volume pension-carga_pgdata_carga Created 
+ Volume pension-carga_pgdata_carga Created 
+ Network pension-carga_default Created 
+ Network pension-carga_default Created 
+ Container pension-carga-db-1 Creating 
+ Container pension-carga-db-1 Created 
+ Container pension-carga-api-1 Creating 
+ Container pension-carga-api-1 Created 
+ Container pension-carga-nginx-1 Creating 
+ Container pension-carga-nginx-1 Created 
+ Container pension-carga-db-1 Starting 
+ Container pension-carga-db-1 Started 
+ Container pension-carga-db-1 Waiting 
+ Container pension-carga-db-1 Healthy 
+ Container pension-carga-api-1 Starting 
+ Container pension-carga-api-1 Started 
+ Container pension-carga-nginx-1 Starting 
+ Container pension-carga-nginx-1 Started 
+2) Pruebas de concurrencia (cobros simultáneos)...
+PHPUnit 10.5.63 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.2.35
+Configuration: /var/www/html/phpunit.concurrencia.xml
+
+
+[cobro en efectivo] 10 solicitudes simultáneas -> códigos {"422":9,"201":1} | pagos completados: 1 | acreditaciones de XP: 1
+.
+[pago por QR] 10 solicitudes simultáneas -> códigos {"422":9,"201":1} | pagos completados: 1 | acreditaciones de XP: 0
+.
+[confirmación de QR] 10 solicitudes simultáneas -> códigos {"200":1,"422":9} | pagos completados: 1 | acreditaciones de XP: 1
+.
+[cobrar y cancelar (estado final: pagado)] 10 solicitudes simultáneas -> códigos {"201":1,"422":9} | pagos completados: 1 | acreditaciones de XP: 1
+.                                                                4 / 4 (100%)
+
+Time: 00:02.073, Memory: 26.00 MB
+
+OK (4 tests, 11 assertions)
+3) Prueba de carga (fases normal y pico, unos 5 minutos)...
+Fase 'normal': 9 usuarios virtuales durante 180 s...
+Endpoint                         Solic.   Prom. ms    p95 ms  Máx. ms  Errores      422
+----------------------------------------------------------------------------------------
+GET /loyalty                         23       14.8      16.2      16.6        0        0
+GET /orders                          96       30.1      32.8      64.7        0        0
+GET /orders/my-orders                98       33.0      32.6     580.9        0        0
+GET /payment-methods                  1      578.6     578.6     578.6        0        0
+GET /products                        37       34.1      26.9     573.3        0        0
+GET /tables                          14       15.0      17.0      17.0        0        0
+PATCH /orders/{id}/status            60       27.6      31.1      57.7        0        2
+PATCH /payments/{id}/confirm          2       43.0      49.9      49.9        0        0
+POST /login                           8      413.9     580.1     580.1        0        0
+POST /orders                         14       29.2      32.0      32.0        0        0
+POST /payments                       30       25.1      33.0      41.9        0       20
+----------------------------------------------------------------------------------------
+TOTAL                               383       38.4      38.8     580.9        0       22
+Solicitudes por segundo: 2.1 | Tasa de errores: 0.00 %
+
+Fase 'pico': 30 usuarios virtuales durante 120 s...
+Endpoint                         Solic.   Prom. ms    p95 ms  Máx. ms  Errores      422
+----------------------------------------------------------------------------------------
+GET /loyalty                        183       14.9      16.1      52.9        0        0
+GET /orders                         167       39.8      49.4      52.9        0        0
+GET /orders/my-orders               357       25.4      29.4     434.6        0        0
+GET /payment-methods                  2       32.1      46.2      46.2        0        0
+GET /products                       237       20.5      24.0     415.5        0        0
+GET /tables                          54       14.7      16.0      21.9        0        0
+PATCH /orders/{id}/status           320       27.2      30.4     372.2        0       12
+PATCH /payments/{id}/confirm         12       34.9      40.3      40.3        0        0
+POST /login                           8      330.5     429.9     429.9        0        0
+POST /orders                         54       28.3      33.4      45.0        0        0
+POST /payments                       76       30.9      32.9     455.4        0       42
+----------------------------------------------------------------------------------------
+TOTAL                              1470       27.1      44.1     455.4        0       54
+Solicitudes por segundo: 12.3 | Tasa de errores: 0.00 %
+
+
+=== Consistencia de los datos al terminar ===
+Pedidos: 72 | Pagos completados: 47
+Pedidos por estado: {"listo":13,"entregado":12,"pagado":47}
+  pedidos con dos pagos completados             0
+  pedidos con dos pagos por confirmar           0
+  pedidos con total distinto a sus platos       0
+  pedidos pagados sin pago                      0
+  pagos con monto distinto al total             0
+  pedidos con xp acreditado mas de una vez      0
+  pedidos pagados sin xp                        0
+  xp de pedidos no pagados                      0
+RESULTADO: datos consistentes.
+
+Salidas: carga/resultados/carga_resumen.txt y carga_resumen.json
+4) CPU y memoria máximas durante la carga:
+   api    CPU máx. 97.5 %  | memoria (última muestra) 77.79MiB / 7.575GiB
+   db     CPU máx. 17.6 %  | memoria (última muestra) 40.79MiB / 7.575GiB
+   nginx  CPU máx. 0.8 %  | memoria (última muestra) 12.33MiB / 7.575GiB
+Listo. Resultados en carga/resultados/. Para borrar el entorno: docker compose -p pension-carga -f docker-compose.carga.yml down -v

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Challenge;
 use App\Models\UserChallenge;
+use App\Reglas\ReglasFidelizacion;
 use App\Services\LoyaltyService;
 use Illuminate\Http\Request;
 
@@ -126,11 +127,11 @@ class ChallengeController extends Controller
 
         $meta = max(1, (int) $reto->goal);
         $participacion->current_count += 1;
-        $participacion->progress = min(100, intdiv($participacion->current_count * 100, $meta));
+        $participacion->progress = ReglasFidelizacion::progreso($participacion->current_count, $meta);
         $participacion->status = 'en_progreso';
         $participacion->save();
 
-        if ($participacion->current_count >= $meta) {
+        if (ReglasFidelizacion::retoCompletado($participacion->current_count, $meta)) {
             $this->loyaltyService->completeChallenge($participacion);
         }
 

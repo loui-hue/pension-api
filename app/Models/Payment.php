@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Reglas\ReglasDePago;
 use Illuminate\Database\Eloquent\Model;
 
 class Payment extends Model
@@ -33,10 +34,7 @@ class Payment extends Model
 
     public function getSecondsLeftAttribute(): ?int
     {
-        if ($this->status !== 'pendiente' || !$this->expires_at) {
-            return null;
-        }
-        return max(0, now()->diffInSeconds($this->expires_at, false));
+        return ReglasDePago::segundosRestantes((string) $this->status, $this->expires_at, now());
     }
 
     public function order()

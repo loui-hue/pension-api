@@ -20,7 +20,11 @@ trait CreatesApplication
         // solo pueden correr sobre SQLite en memoria, nunca sobre la base real.
         $conexion = $app['config']->get('database.default');
         $base = $app['config']->get("database.connections.{$conexion}.database");
-        if ($conexion !== 'sqlite' || $base !== ':memory:') {
+        // Única excepción: las pruebas de concurrencia (tests/Concurrencia) corren contra
+        // la base del entorno de prueba separado "pension_carga" y no borran tablas.
+        $esConcurrencia = $conexion === 'pgsql' && $base === 'pension_carga'
+            && !in_array(\Illuminate\Foundation\Testing\RefreshDatabase::class, class_uses_recursive($this));
+        if (!$esConcurrencia && ($conexion !== 'sqlite' || $base !== ':memory:')) {
             throw new \RuntimeException("Pruebas abortadas: la conexión es '{$conexion}' ({$base}), se esperaba SQLite en memoria.");
         }
 

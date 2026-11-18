@@ -11,6 +11,7 @@ use App\Models\PaymentMethod;
 use App\Models\Streak;
 use App\Models\User;
 use App\Models\UserBadge;
+use App\Reglas\ReglasDelReporte;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 
@@ -76,9 +77,10 @@ class ReportController extends Controller
 
         // Frecuencia de visitas: una visita = un comensal con pedido pagado en un día.
         $clienteIds = User::whereHas('roles', fn ($q) => $q->where('name', 'cliente'))->pluck('id');
-        $visitas = $pagados->whereIn('user_id', $clienteIds)
-            ->groupBy('user_id')
-            ->map(fn ($pedidos) => $pedidos->map(fn ($o) => $o->created_at->toDateString())->unique()->count());
+        $visitas = collect(ReglasDelReporte::visitasPorComensal(
+            $pagados->whereIn('user_id', $clienteIds)
+                ->map(fn ($o) => [$o->user_id, $o->created_at->toDateString()])
+        ));
 
         $nombres = User::whereIn('id', $visitas->keys())->pluck('name', 'id');
         $frecuentes = $visitas->sortDesc()->take(5)->map(fn ($n, $userId) => [
@@ -129,7 +131,7 @@ class ReportController extends Controller
                 'paid_orders' => $pagados->count(),
                 'cancelled_orders' => $orders->where('status', 'cancelado')->count(),
                 'sales' => round($ventas, 2),
-                'average_ticket' => $pagados->count() ? round($ventas / $pagados->count(), 2) : 0,
+                'average_ticket' => ReglasDelReporte::ticketPromedio($ventas, $pagados->count()),
             ],
             'sales_by_day' => array_values(array_map(function ($d) {
                 $d['sales'] = round($d['sales'], 2);
