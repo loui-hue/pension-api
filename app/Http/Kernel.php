@@ -44,6 +44,7 @@ class Kernel extends HttpKernel
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \App\Http\Middleware\SoloRutasDelPortal::class,   // en la nube, solo consultas del comensal
             \App\Http\Middleware\SincronizarPortalTrasCambios::class,   // en la pensión, copia al portal tras cada cambio
+            \App\Http\Middleware\RegistrarAuditoria::class,   // en la pensión, quién hizo qué y cuándo
         ],
     ];
 
