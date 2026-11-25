@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Services\PortalSync;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class AuthController extends Controller
 {
@@ -86,6 +87,14 @@ class AuthController extends Controller
             'password' => $request->password,   // el cast "hashed" la cifra
             'must_change_password' => false,
         ]);
+
+        // Se cierran las demás sesiones del usuario (otros celulares): si alguien había
+        // tomado su sesión, deja de servirle. La sesión con la que cambió la contraseña
+        // sigue abierta. En el portal se cierran con la siguiente copia (PortalSync).
+        $actual = $user->currentAccessToken();
+        $user->tokens()
+            ->when($actual instanceof PersonalAccessToken, fn ($q) => $q->whereKeyNot($actual->getKey()))
+            ->delete();
 
         return response()->json(['message' => 'Contraseña actualizada']);
     }
