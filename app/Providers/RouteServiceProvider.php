@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Http\Middleware\RegistrarAuditoria;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 use Illuminate\Http\Request;
@@ -36,11 +37,18 @@ class RouteServiceProvider extends ServiceProvider
             'message' => 'Demasiados intentos. Espera un minuto e inténtalo de nuevo.',
         ], 429);
 
-        RateLimiter::for('login', function (Request $request) use ($demasiados) {
+        // El limitador responde antes de llegar al registro de auditoría, así que el
+        // intento frenado se registra aquí mismo.
+        $loginFrenado = function (Request $request) use ($demasiados) {
+            RegistrarAuditoria::inicioFrenado($request);
+            return $demasiados();
+        };
+
+        RateLimiter::for('login', function (Request $request) use ($loginFrenado) {
             $cuenta = mb_strtolower(trim((string) $request->input('email')));
             return [
-                Limit::perMinute(5)->by('login-cuenta:' . $cuenta)->response($demasiados),
-                Limit::perMinute(60)->by('login-ip:' . $request->ip())->response($demasiados),
+                Limit::perMinute(5)->by('login-cuenta:' . $cuenta)->response($loginFrenado),
+                Limit::perMinute(60)->by('login-ip:' . $request->ip())->response($loginFrenado),
             ];
         });
 
