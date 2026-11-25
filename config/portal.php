@@ -28,6 +28,7 @@ return [
         'api/loyalty/streak',
         'api/badges',
         'api/badges/user',
+        'api/cortesias',
         'api/challenges',
         'api/challenges/user',
         'api/orders/my-orders',

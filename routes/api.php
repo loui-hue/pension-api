@@ -90,6 +90,8 @@ Route::middleware(['auth:sanctum', 'password.changed'])->group(function () {
     // Insignias
     Route::get('/badges', [BadgeController::class, 'index']);
     Route::get('/badges/user', [BadgeController::class, 'userBadges']);
+    // Cortesía de la insignia (refresco del día de Cliente Frecuente): disponible o usada.
+    Route::get('/cortesias', [BadgeController::class, 'cortesias']);
     Route::post('/badges/assign', [BadgeController::class, 'assignBadge'])->middleware('role:administrador');
 
     // Retos: el comensal se une; solo el administrador crea retos o registra su avance.

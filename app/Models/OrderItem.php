@@ -16,7 +16,14 @@ class OrderItem extends Model
         'unit_price',
         'subtotal',
         'notes',
+        'courtesy_badge_id',
     ];
+
+    /** Insignia cuya cortesía es este plato (precio 0), o null si se cobra. */
+    public function courtesyBadge()
+    {
+        return $this->belongsTo(Badge::class, 'courtesy_badge_id');
+    }
 
     public function order()
     {

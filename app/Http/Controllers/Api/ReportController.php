@@ -63,6 +63,7 @@ class ReportController extends Controller
             ->join('products', 'products.id', '=', 'order_items.product_id')
             ->whereBetween('orders.created_at', [$from, $to])
             ->where('orders.status', '!=', 'cancelado')
+            ->whereNull('order_items.courtesy_badge_id')   // los más vendidos: sin las cortesías
             ->groupBy('products.id', 'products.name')
             ->selectRaw('products.id as product_id, products.name as name, SUM(order_items.quantity) as quantity, SUM(order_items.subtotal) as revenue')
             ->orderByDesc('quantity')
@@ -160,6 +161,10 @@ class ReportController extends Controller
                 'participation_rate' => $registrados ? round($participantes * 100 / $registrados, 1) : 0,
                 'xp_awarded' => (int) LoyaltyPoint::whereBetween('created_at', [$from, $to])->sum('points'),
                 'badges_awarded' => UserBadge::whereBetween('obtained_at', [$from, $to])->count(),
+                // Refrescos de cortesía de Cliente Frecuente en pedidos no cancelados del período.
+                'courtesies_given' => OrderItem::whereNotNull('courtesy_badge_id')
+                    ->whereHas('order', fn ($q) => $q->whereBetween('created_at', [$from, $to])->where('status', '!=', 'cancelado'))
+                    ->count(),
                 'active_streaks' => Streak::where('current_streak', '>', 0)
                     ->where('last_visit', '>=', now()->subDay()->toDateString())
                     ->count(),

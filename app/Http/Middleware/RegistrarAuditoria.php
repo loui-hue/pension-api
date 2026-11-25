@@ -94,8 +94,8 @@ class RegistrarAuditoria
             'UserController@resetCustomerPassword' => ['usuario.contrasena', 'Restableció la contraseña del comensal ' . (User::find($id)?->name ?? "#{$id}"), 'usuario', $id, null],
 
             'OrderController@store' => ['pedido.creado', "Registró el pedido #{$d['id']} de " . ($d['user']['name'] ?? 'un comensal')
-                . ', mesa ' . ($d['table']['number'] ?? '?') . ', ' . $bs($d['total'] ?? 0), 'pedido', $d['id'] ?? null, null],
-            'OrderController@update' => ['pedido.modificado', "Modificó el pedido #{$d['id']} (" . $bs($d['total'] ?? 0) . ')', 'pedido', $d['id'] ?? null, null],
+                . ', mesa ' . ($d['table']['number'] ?? '?') . ', ' . $bs($d['total'] ?? 0) . $this->conCortesia($d), 'pedido', $d['id'] ?? null, null],
+            'OrderController@update' => ['pedido.modificado', "Modificó el pedido #{$d['id']} (" . $bs($d['total'] ?? 0) . ')' . $this->conCortesia($d), 'pedido', $d['id'] ?? null, null],
             'OrderController@updateStatus' => ($d['status'] ?? '') === 'cancelado'
                 ? ['pedido.cancelado', "Canceló el pedido #{$d['id']}", 'pedido', $d['id'] ?? null, null]
                 : ['pedido.estado', "Pasó el pedido #{$d['id']} a «" . (self::ESTADOS[$d['status'] ?? ''] ?? ($d['status'] ?? '?')) . '»', 'pedido', $d['id'] ?? null, null],
@@ -176,6 +176,15 @@ class RegistrarAuditoria
             'subject_id' => $sujeto,
             'meta' => ['ruta' => $request->method() . ' /' . $request->path(), 'estado' => $response->getStatusCode()],
         ]);
+    }
+
+    /** « con cortesía: Refresco del día (vaso)» si el pedido incluye la cortesía de una insignia. */
+    private function conCortesia(array $pedido): string
+    {
+        $cortesias = collect($pedido['items'] ?? [])->filter(fn ($item) => !empty($item['courtesy_badge_id']));
+        return $cortesias->isEmpty()
+            ? ''
+            : ', con cortesía: ' . $cortesias->map(fn ($item) => $item['product']['name'] ?? 'producto')->join(', ');
     }
 
     private function idDeRuta(Request $request): ?int

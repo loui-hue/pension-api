@@ -8,6 +8,7 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\Table;
 use App\Models\User;
+use App\Services\Cortesias;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -28,6 +29,7 @@ class OrderController extends Controller
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
+            'items.*.cortesia' => 'sometimes|boolean',
             'notes' => 'nullable|string',
             'user_id' => 'nullable|exists:users,id',
         ]);
@@ -59,6 +61,8 @@ class OrderController extends Controller
         }
 
         $order = DB::transaction(function () use ($request, $comensalId, $meseroId) {
+            // Comensal bloqueado: dos pedidos a la vez no pueden usar la misma cortesía.
+            $comensal = User::lockForUpdate()->findOrFail($comensalId);
             $order = Order::create([
                 'user_id' => $comensalId,
                 'waiter_id' => $meseroId,
@@ -68,7 +72,7 @@ class OrderController extends Controller
                 'total' => 0,
             ]);
 
-            $this->guardarPlatos($order, $request->items);
+            $this->guardarPlatos($order, $request->items, $comensal);
             Table::findOrFail($request->table_id)->update(['status' => 'ocupada']);
 
             return $order;
@@ -98,6 +102,7 @@ class OrderController extends Controller
             'items' => 'sometimes|required|array|min:1',
             'items.*.product_id' => 'required_with:items|exists:products,id',
             'items.*.quantity' => 'required_with:items|integer|min:1',
+            'items.*.cortesia' => 'sometimes|boolean',
         ]);
 
         Order::findOrFail($id);
@@ -120,8 +125,9 @@ class OrderController extends Controller
             $order->update(collect($validated)->only(['table_id', 'notes'])->all());
 
             if ($request->has('items')) {
+                // Si tenía la cortesía, queda libre al borrar los platos y se puede volver a poner.
                 $order->items()->delete();
-                $this->guardarPlatos($order, $request->items);
+                $this->guardarPlatos($order, $request->items, User::lockForUpdate()->findOrFail($order->user_id));
             }
 
             if ((int) $order->table_id !== (int) $mesaAnterior) {
@@ -149,22 +155,31 @@ class OrderController extends Controller
         ], 422);
     }
 
-    /** Crea los platos del pedido con el precio vigente y recalcula el total. */
-    private function guardarPlatos(Order $order, array $items): void
+    /**
+     * Crea los platos del pedido con el precio vigente y recalcula el total. Un plato
+     * marcado "cortesia" va a precio 0 si el comensal tiene esa cortesía disponible
+     * (si no, el pedido se rechaza con 422 y no se guarda nada).
+     */
+    private function guardarPlatos(Order $order, array $items, User $comensal): void
     {
+        $cortesias = app(Cortesias::class)->asignar($comensal, $items);
+
         $total = 0;
-        foreach ($items as $item) {
+        foreach ($items as $i => $item) {
             $product = Product::findOrFail($item['product_id']);
-            $subtotal = $product->price * $item['quantity'];
+            $insignia = $cortesias[$i] ?? null;
+            $precio = $insignia ? 0 : $product->price;
+            $subtotal = $precio * $item['quantity'];
             $total += $subtotal;
 
             OrderItem::create([
                 'order_id' => $order->id,
                 'product_id' => $item['product_id'],
                 'quantity' => $item['quantity'],
-                'unit_price' => $product->price,
+                'unit_price' => $precio,
                 'subtotal' => $subtotal,
                 'notes' => $item['notes'] ?? null,
+                'courtesy_badge_id' => $insignia,
             ]);
         }
 

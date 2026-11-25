@@ -15,7 +15,14 @@ class Badge extends Model
         'image',
         'xp_required',
         'type',
+        'reward_product_id',
     ];
+
+    /** Lo que la casa invita al obtener la insignia (una vez), o null. */
+    public function rewardProduct()
+    {
+        return $this->belongsTo(Product::class, 'reward_product_id');
+    }
 
     public function users()
     {

@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\Badge;
+use App\Models\Product;
 
 class BadgeSeeder extends Seeder
 {
@@ -13,17 +14,24 @@ class BadgeSeeder extends Seeder
      */
     public const INSIGNIAS = [
         ['name' => 'Primer Pedido', 'description' => 'Pagaste tu primer pedido en la pensión', 'xp_required' => 0, 'type' => 'compras'],
-        ['name' => 'Cliente Frecuente', 'description' => 'Alcanzaste 100 XP: la casa te invita un refresco del día', 'xp_required' => 100, 'type' => 'visitas'],
+        ['name' => 'Cliente Frecuente', 'description' => 'Alcanzaste 100 XP: la casa te invita un refresco del día (vaso), una vez', 'xp_required' => 100, 'type' => 'visitas'],
         ['name' => 'Retador', 'description' => 'Alcanzaste 150 XP en la pensión', 'xp_required' => 150, 'type' => 'retos'],
         ['name' => 'Racha de Fuego', 'description' => 'Alcanzaste 200 XP en la pensión', 'xp_required' => 200, 'type' => 'visitas'],
         ['name' => 'Gourmet', 'description' => 'Alcanzaste 300 XP en la pensión', 'xp_required' => 300, 'type' => 'compras'],
         ['name' => 'VIP', 'description' => 'Alcanzaste 500 XP: eres cliente VIP de la pensión', 'xp_required' => 500, 'type' => 'especial'],
     ];
 
+    /** Insignia => producto que la casa invita al obtenerla, una vez (se entrega como cortesía en un pedido). */
+    public const CORTESIAS = ['Cliente Frecuente' => 'Refresco del día (vaso)'];
+
     public function run(): void
     {
         foreach (self::INSIGNIAS as $badge) {
-            Badge::create($badge);
+            Badge::create($badge + [
+                'reward_product_id' => isset(self::CORTESIAS[$badge['name']])
+                    ? Product::where('name', self::CORTESIAS[$badge['name']])->value('id')
+                    : null,
+            ]);
         }
     }
 }
