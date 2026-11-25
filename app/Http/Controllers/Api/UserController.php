@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Role;
 use App\Models\User;
+use App\Reglas\ReglasDeContrasena;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -110,7 +111,6 @@ class UserController extends Controller
         'phone.regex' => 'El celular debe tener solo números (7 a 15 dígitos).',
         'phone.unique' => 'Ya existe un usuario con ese celular.',
         'password.required' => 'Escribe la contraseña temporal.',
-        'password.min' => 'La contraseña temporal debe tener al menos 6 caracteres.',
         'role.required' => 'Elige el rol.',
         'role.in' => 'El rol debe ser mesero, cocina, caja o administrador.',
     ];
@@ -125,7 +125,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email',
             'phone' => 'nullable|string|regex:/^[0-9]{7,15}$/|unique:users,phone',
-            'password' => 'required|string|min:6',
+            'password' => ['required', 'string', ReglasDeContrasena::regla('La contraseña temporal')],
             'role' => 'required|in:' . implode(',', self::ROLES_PERSONAL),
         ], self::MENSAJES_PERSONAL);
 

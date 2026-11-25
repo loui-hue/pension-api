@@ -172,7 +172,7 @@ class GestionAdministradorTest extends TestCase
         ])->assertStatus(422)
             ->assertJsonPath('errors.email.0', 'Ya existe un usuario con ese correo.')
             ->assertJsonPath('errors.phone.0', 'El celular debe tener solo números (7 a 15 dígitos).')
-            ->assertJsonPath('errors.password.0', 'La contraseña temporal debe tener al menos 6 caracteres.')
+            ->assertJsonPath('errors.password.0', 'La contraseña temporal debe tener al menos 8 caracteres, con letras y números.')
             ->assertJsonPath('errors.role.0', 'El rol debe ser mesero, cocina, caja o administrador.');
     }
 

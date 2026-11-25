@@ -14,12 +14,12 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\PortalController;
 // Rutas públicas
-Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:10,1');   // 10 intentos por minuto
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');   // 5 intentos por minuto por cuenta (ver RouteServiceProvider)
 Route::get('/ping', [PortalController::class, 'ping']);
 // Portal en la nube: recibe la copia de la pensión (protegida con PORTAL_SYNC_TOKEN).
 Route::post('/portal/sync', [PortalController::class, 'sync']);
 // Pensión: acepta la sesión que el comensal inició fuera (en el portal) al entrar al Wi-Fi.
-Route::post('/portal/traer-sesion', [PortalController::class, 'traerSesion'])->middleware('throttle:10,1');
+Route::post('/portal/traer-sesion', [PortalController::class, 'traerSesion'])->middleware('throttle:traer-sesion');
 
 // Rutas protegidas
 // password.changed: con contraseña temporal solo se permite /me, /me/password y /logout.
