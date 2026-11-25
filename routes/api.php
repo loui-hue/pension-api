@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\BadgeController;
 use App\Http\Controllers\Api\ChallengeController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\ReportController;
+use App\Http\Controllers\Api\AuditoriaController;
 use App\Http\Controllers\Api\PortalController;
 // Rutas públicas
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');   // 5 intentos por minuto por cuenta (ver RouteServiceProvider)
@@ -104,4 +105,7 @@ Route::middleware(['auth:sanctum', 'password.changed'])->group(function () {
 
     // Reportes del Dashboard
     Route::get('/reports/dashboard', [ReportController::class, 'dashboard'])->middleware('role:administrador');
+
+    // Auditoría: quién hizo qué y cuándo (solo administrador)
+    Route::get('/auditoria', [AuditoriaController::class, 'index'])->middleware('role:administrador');
 });
