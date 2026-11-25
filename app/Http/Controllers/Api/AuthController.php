@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Reglas\ReglasDeContrasena;
 use App\Services\PortalSync;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -63,9 +64,8 @@ class AuthController extends Controller
 
         $request->validate([
             'current_password' => 'required|string',
-            'password' => 'required|string|min:6|confirmed|different:current_password',
+            'password' => ['required', 'string', ReglasDeContrasena::regla('La contraseña nueva'), 'confirmed', 'different:current_password'],
         ], [
-            'password.min' => 'La contraseña nueva debe tener al menos 6 caracteres.',
             'password.confirmed' => 'Las contraseñas no coinciden.',
             'password.different' => 'La contraseña nueva debe ser distinta de la actual.',
         ]);

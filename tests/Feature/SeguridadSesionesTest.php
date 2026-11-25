@@ -49,6 +49,27 @@ class SeguridadSesionesTest extends TestCase
         $this->withToken($estaSesion)->getJson('/api/me')->assertOk();
     }
 
+    public function test_la_contrasena_nueva_debe_tener_8_caracteres_con_letras_y_numeros(): void
+    {
+        $ana = $this->cuenta('ana@test.local', 'secreto123');
+        $token = $ana->createToken('auth_token')->plainTextToken;
+
+        foreach (['abc12', '12345678', 'contrasena'] as $debil) {
+            $this->withToken($token)->postJson('/api/me/password', [
+                'current_password' => 'secreto123', 'password' => $debil, 'password_confirmation' => $debil,
+            ])->assertStatus(422)->assertJsonPath(
+                'errors.password.0', 'La contraseña nueva debe tener al menos 8 caracteres, con letras y números.'
+            );
+        }
+        $this->withToken($token)->postJson('/api/me/password', [
+            'current_password' => 'secreto123', 'password' => 'pension24', 'password_confirmation' => 'pension24',
+        ])->assertOk();
+
+        // Las contraseñas que ya existían siguen sirviendo: la regla es solo para las nuevas.
+        $this->cuenta('carlos@test.local', 'abc123');
+        $this->postJson('/api/login', ['email' => 'carlos@test.local', 'password' => 'abc123'])->assertOk();
+    }
+
     public function test_los_intentos_fallidos_de_una_cuenta_no_bloquean_a_las_demas(): void
     {
         $this->cuenta('ana@test.local', 'secreto123');
