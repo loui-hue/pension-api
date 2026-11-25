@@ -1,12 +1,13 @@
 #!/bin/sh
 # Publica la APK en la página de descarga:
 #  - en el servidor local de la pensión: http://192.168.0.200:8000/app/
+#    (con la zona Wi-Fi de la laptop: http://192.168.137.1:8000/app/)
 #  - en el portal en la nube (VPS):      https://pension.169-58-97-170.sslip.io/app/
 #    (así el jurado o los comensales la descargan sin que la PC de la pensión esté encendida)
 #
 # Uso, desde la carpeta pension-api:   sh docker/publicar-apk.sh
 # Antes: compilar la app final, en la carpeta pension_app:
-#   flutter build apk --release --dart-define=API_URL=http://192.168.0.200:8000/api \
+#   flutter build apk --release --dart-define=API_URLS=http://192.168.0.200:8000/api,http://192.168.137.1:8000/api \
 #     --dart-define=PORTAL_URL=https://pension.169-58-97-170.sslip.io/api
 set -e
 cd "$(dirname "$0")/descargas"
